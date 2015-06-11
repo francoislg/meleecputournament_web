@@ -13,6 +13,8 @@ var customOpts = {
   entries: ['./src/index.js']
 };
 
+var bundleFileName = "bundle.js";
+
 gulp.task('watch', function() {
     var opts = assign({
         debug:true
@@ -24,7 +26,7 @@ gulp.task('watch', function() {
         return watchifier.bundle()
           // log errors if they happen
           .on('error', gutil.log.bind(gutil, 'Browserify Error'))
-          .pipe(source('bundle.js'))
+          .pipe(source(bundleFileName))
           // optional, remove if you don't need to buffer file contents
           .pipe(buffer())
           // optional, remove if you dont want sourcemaps
@@ -42,7 +44,7 @@ gulp.task('browserify', function () {
     var browserifier = browserify(opts);
   // set up the browserify instance on a task basis
   return browserifier.bundle()
-    .pipe(source('app.js'))
+    .pipe(source(bundleFileName))
     .pipe(buffer())
     .pipe(sourcemaps.init({loadMaps: true}))
         // Add transformation tasks to the pipeline here.

@@ -26434,7 +26434,7 @@ require("./main");
 var angular = require("angular");
 
 function MainController ($scope) {
-    $scope.test = "omg";
+    $scope.test = "Testing";
 }
 
 angular.module("MeleeCPUTournament")

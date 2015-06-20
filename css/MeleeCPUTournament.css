@@ -1,0 +1,12 @@
+.twitch-container {
+    width:100%;
+    height:50%;
+}
+.twitch-video {
+    width:auto;
+    overflow:hidden;
+}
+.twitch-chat {
+    width:300px;
+    float:right;
+}

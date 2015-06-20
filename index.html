@@ -1,13 +1,24 @@
 <html>
 
 <head>
+    <link rel="stylesheet" type="text/css" href="dist/MeleeCPUTournament.css">
     <script src="dist/bundle.js"></script>
 </head>
 
 <body ng-app="MeleeCPUTournament">
     <div ng-controller="mainController">
-        {{test}} <br/>
-        Last data : {{data | json}}
+        <div>
+            {{test}}
+            <br/> Last data : {{data | json}}
+        </div>
+        <div class='twitch-container'>
+            <div class='twitch-chat'>
+                <twitch-chat channel="blizzheroes"></twitch-chat>
+            </div>
+            <div class='twitch-video'>
+                <twitch channel="blizzheroes"></twitch>
+            </div>
+        </div>
     </div>
 </body>
 

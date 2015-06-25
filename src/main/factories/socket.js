@@ -24,4 +24,4 @@ function Socket($rootScope) {
 }
 
 angular.module("MeleeCPUTournament")
-    .factory('socket', Socket);
+    .factory('socket', ['$rootScope', Socket]);

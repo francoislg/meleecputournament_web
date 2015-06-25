@@ -13,6 +13,7 @@ app.get('/sendEvent', function(req, res) {
   io.sockets.emit("message", {
       "somekindof":"data"
   });
+  res.end("received");
 });
 
 app.post("/signin", function(req, res){
@@ -24,4 +25,4 @@ io.on('connection', function (socket) {
   socket.emit("message", "CONNECTED");
 });
 
-server.listen(8080);
+server.listen(3000);

@@ -3,5 +3,5 @@ require("angular-twitch");
 
 angular.module("MeleeCPUTournament", ["angular-twitch"]);
 
-require("./controllers/mainController");
+require("./controllers/main");
 require("./factories/socket");

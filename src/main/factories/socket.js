@@ -1,4 +1,4 @@
-var socket = require("socket.io-client")('http://localhost');
+var socket = require("socket.io-client")('http://localhost:8080');
 
 function Socket($rootScope) {
     return {

@@ -1,6 +1,8 @@
 import { CHARACTERS } from "./constants";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
+import { OverlayServer } from "./overlay-server";
+import { getNextTournament } from "./tournament-commands";
 
 // tmi.js doc: https://github.com/tmijs/docs/blob/gh-pages/_posts
 const tmi = require("tmi.js");
@@ -26,7 +28,20 @@ type Command = (
   ...args: string[]
 ) => Promise<any> | void;
 
-const createCommands = ({ client, channel }): Record<string, Command> => ({
+const createCommands = ({
+  client,
+  channel,
+  overlay,
+}: {
+  client: typeof tmi.client;
+  channel: string;
+  overlay: OverlayServer;
+}): Record<string, Command> => ({
+  url: async () => {
+    const tournament = await getNextTournament();
+
+    client.say(channel, `The tournament is here: challonge.com/${tournament.url}`);
+  },
   points: async ({ userName, userId }, ...args) => {
     const user = await UserModel.findOne({
       twitchId: userId,
@@ -59,19 +74,22 @@ const createCommands = ({ client, channel }): Record<string, Command> => ({
     if (!character) {
       client.say(
         channel,
-        `${userName} didn't enter a character name. Ex: !at Mario 5.`
+        `${userName} didn't enter a character name. Ex: !at enter Mario 5.`
       );
       return;
     }
 
     if (!bet) {
-      client.say(channel, `${userName} didn't enter a bet. Ex: !at Mario 5.`);
+      client.say(channel, `${userName} didn't enter a bet. Ex: !at enter Mario 5.`);
       return;
     }
 
     if (name) {
       if (name.length > MAX_NAME_LENGTH) {
-        client.say(channel, `${userName} entered a custom name a bit too long. The maximum is 20 characters.`);
+        client.say(
+          channel,
+          `${userName} entered a custom name a bit too long. The maximum is 20 characters.`
+        );
         return;
       }
     }
@@ -144,7 +162,7 @@ const createCommands = ({ client, channel }): Record<string, Command> => ({
         )}. You ${
           user.points > 0
             ? `have ${pointsString(user.points)}`
-            : `sadly have no points left.`
+            : `sadly have no points left`
         }.`
       );
     } else {
@@ -158,7 +176,7 @@ const createCommands = ({ client, channel }): Record<string, Command> => ({
 });
 
 export class ChatServer {
-  constructor() {
+  constructor(overlay: OverlayServer) {
     const channel = CHANNEL_NAME;
     const client = new tmi.client({
       connection: {
@@ -174,6 +192,7 @@ export class ChatServer {
     const commands = createCommands({
       client,
       channel,
+      overlay,
     });
 
     client.on("message", (target, context, msg, self) => {

@@ -24,7 +24,7 @@ export const CHARACTERS = [
   "Falco",
   "Pichu",
   "Roy",
-  "Shiek",
+  // Doesn't quite work yet, "Shiek",
 ];
 
 export const randomCharacter = () => CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];

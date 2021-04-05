@@ -1,5 +1,5 @@
 import { config as configDotDev } from 'dotenv';
-import { run } from './run';
+import { run, runWithServer } from './run';
 import { setup } from './setup';
 import { setInputs } from './smashultimatecontroller';
 
@@ -14,8 +14,10 @@ const start = async () => {
     await setup();
   } else if (hasFlag('--setupinputs')) {
     await setInputs();
-  } else {
+  } else if (hasFlag('--standalone')) {
     await run();
+  } else {
+    await runWithServer();
   }
 };
 

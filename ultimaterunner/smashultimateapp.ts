@@ -26,6 +26,7 @@ export interface ITickResponse {
     readyForMatch?: boolean;
     playerWon?: number;
     nextDelay?: number;
+    matchInProgress?: boolean;
 }
 
 export class SmashApp {
@@ -69,7 +70,7 @@ export class SmashApp {
               return {nextDelay: 200};
             }
         case SmashState.MATCH_IN_PROGRESS:
-          return {nextDelay: 5000};
+          return {nextDelay: 5000, matchInProgress: true};
     }
 
     return {};

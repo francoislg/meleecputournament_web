@@ -8,13 +8,13 @@ const RANDOMSPOT = 'RANDOM';
 const CONSTANTS = {
   // prettier-ignore
   characters: [
-    "Mario", "Donkey Kong", "Link", "Samus", "Dark Samus", "Yoshi", "Kirby", "Fox", "Pikachu", "Luigi", "Ness", "Captain Falcon",
-    "Jigglypuff", "Peach", "Daisy", "Bowser", "Ice Climbers", "Shiek", "Zelda", "Dr Mario", "Pichu", "Falco", "Marth", "Lucina",
-    "Young Link", "Ganondorf", "Mewtwo", "Roy", "Chrom", "Mr Game And Watch", "Meta Knight", "Pit", "Dark Pit", "Zero Suit Samus", "Wario", "Snake",
-    "Ike", "Pokemon Trainer", "Diddy Kong", "Lucas", "Sonic", "King DeDeDe", "Olimar", "Lucario", "ROB", "Toon Link", "Wolf", "Villager",
-    "Mega Man", "Wii Fit Trainer", "Rosalina And Luma", "Little Mac", "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "Bowser Jr.", "Duck Hunt", "Ryu",
-    "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", "Ridley", "Simon", "Richter", "King K. Rool", "Isabelle", "Incineroar", "Piranha Plant",
-    EMPTYSPOT, "Joker", "Hero", "Banjo And Kazooie", "Terry", "Byleth", "Min Min", "Steve", "Sephiroth", "Pyra", RANDOMSPOT, EMPTYSPOT
+    "Mario", "DonkeyKong", "Link", "Samus", "DarkSamus", "Yoshi", "Kirby", "Fox", "Pikachu", "Luigi", "Ness", "CaptainFalcon",
+    "Jigglypuff", "Peach", "Daisy", "Bowser", "IceClimbers", "Shiek", "Zelda", "DrMario", "Pichu", "Falco", "Marth", "Lucina",
+    "YoungLink", "Ganondorf", "Mewtwo", "Roy", "Chrom", "GameAndWatch", "MetaKnight", "Pit", "DarkPit", "ZeroSuitSamus", "Wario", "Snake",
+    "Ike", "PokemonTrainer", "DiddyKong", "Lucas", "Sonic", "KingDeDeDe", "Olimar", "Lucario", "ROB", "ToonLink", "Wolf", "Villager",
+    "MegaMan", "WiiFitTrainer", "Rosalina", "Little Mac", "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",
+    "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", "Ridley", "Simon", "Richter", "KRool", "Isabelle", "Incineroar", "PiranhaPlant",
+    EMPTYSPOT, "Joker", "Hero", "BanjoKazooie", "Terry", "Byleth", "MinMin", "Steve", "Sephiroth", "Pyra", RANDOMSPOT, EMPTYSPOT
   ],
   charactersPerRow: 12,
   characterBox: {

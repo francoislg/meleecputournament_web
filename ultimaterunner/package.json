@@ -1,8 +1,9 @@
 {
   "scripts": {
     "setupinputs": "ts-node index.ts --setupinputs",
+    "standalone": "ts-node index.ts --standalone",
     "setup": "ts-node index.ts --setup",
-    "start": "ts-node index.ts"
+    "start": "ts-node-dev index.ts"
   },
   "dependencies": {
     "dotenv": "^8.2.0",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^14.14.37",
-    "ts-node": "^9.1.1"
+    "ts-node": "^9.1.1",
+    "ts-node-dev": "^1.1.6"
   }
 }

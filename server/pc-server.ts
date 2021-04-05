@@ -10,6 +10,7 @@ import {
   finishMatch,
   officiallyStartMatch,
   PlayerMessageMeta,
+  MatchMessage,
 } from "./tournament-commands";
 
 export interface MatchResponseMessage {
@@ -23,6 +24,8 @@ export class PCServer {
   constructor(private overlay: OverlayServer) {}
 
   public connect(socket: Socket, { reconnecting }: { reconnecting: boolean }) {
+    let lastMatch: MatchMessage;
+    
     const fillAndStartTournament = async (tournamentId: string) => {
       await addParticipants(tournamentId);
       await startTournament(tournamentId);
@@ -42,6 +45,7 @@ export class PCServer {
             if (match) {
               await officiallyStartMatch(tournament.id, match.matchId);
               socket.emit("match", match);
+              lastMatch = match;
               this.overlay.updateMatchesData();
             } else {
               await finishTournament(tournament.id);
@@ -57,6 +61,12 @@ export class PCServer {
         console.error(err);
       }
     };
+
+    socket.on("reemitlast", () => {
+      if (lastMatch) {
+        socket.emit("match", lastMatch);
+      }
+    });
 
     socket.on(
       "winner",
@@ -85,6 +95,8 @@ export class PCServer {
 
     if (!reconnecting) {
       sendNextMatch();
+    } else if (lastMatch) {
+      socket.emit("match", lastMatch);
     }
   }
 }

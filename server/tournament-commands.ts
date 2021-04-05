@@ -178,9 +178,9 @@ export const createNewTournament = async () => {
   const count = await TournamentModel.countDocuments();
   const created = await TournamentAdapter.create(CHALLONGE_API_KEY, {
     tournament: {
-      name: `Melee CPU Tournament #${count}`,
+      name: `Ultimate CPU Tournament #${count}`,
       description: "An automated tournament, see https://www.twitch.tv/autotournaments",
-      url: `meleecputournament_test${count}`,
+      url: `ultimatecputournament_test${count}`,
     },
   });
   const tournamentId = created.tournament.id.toString();

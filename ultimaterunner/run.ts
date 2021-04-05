@@ -17,6 +17,8 @@ export const runWithServer = async () => {
   });
 
   let currentMatch: MatchMessage | null;
+  let startCurrentMatch: boolean;
+  let charactersSelected: boolean;
   let bufferedWinner: number | null;
 
   socket.on('match', async (match: MatchMessage) => {
@@ -29,6 +31,15 @@ export const runWithServer = async () => {
     }
   });
 
+  socket.on('startmatch', () => {
+    startCurrentMatch = true;
+  })
+
+  const askForReemit = () => {
+    console.log("Asking to re emit match");
+    socket.emit('reemitlast');
+  }
+
   const reportWinner = (player: number, match: MatchMessage) => {
     const isWinnerFirstPlayer = player === 1;
     const response: MatchResponseMessage = {
@@ -40,6 +51,8 @@ export const runWithServer = async () => {
     socket.emit('winner', response);
     currentMatch = null;
     bufferedWinner = null;
+    charactersSelected = false;
+    startCurrentMatch = false;
   }
 
   await withController(async (ult) => {
@@ -51,18 +64,23 @@ export const runWithServer = async () => {
       if (readyForMatch) {
         console.log('Ready for a match!');
         if (currentMatch) {
-          await ult.selectCharactersAndStart(
-            currentMatch.first.character,
-            currentMatch.second.character
-          );
-        } else {
-          socket.emit('reemitlast');
+          if (!charactersSelected) {
+            charactersSelected = true;
+            await ult.justSelectCharacters(currentMatch.first.character,
+              currentMatch.second.character);
+          }
+          if (startCurrentMatch) {
+            startCurrentMatch = false;
+            await ult.startMatch();
+          } else {
+            console.log("Server did not send the OK");
+          }
         }
       }
 
       if (matchInProgress) {
         if (!currentMatch) {
-          socket.emit('reemitlast');
+          askForReemit();
         }
       }
 
@@ -70,10 +88,10 @@ export const runWithServer = async () => {
         if (currentMatch) {
           console.log(`Player ${playerWon} won! Reporting to server.`);
           reportWinner(playerWon, currentMatch);
-        } {
+        } else {
           console.log(`Player ${playerWon} won but we have no match, buffering winner.`);
           bufferedWinner = playerWon;
-          socket.emit('reemitlast');
+          askForReemit();
         }
       }
 

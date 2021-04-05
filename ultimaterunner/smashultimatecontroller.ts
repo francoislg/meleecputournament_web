@@ -169,13 +169,21 @@ export class SmashUltimateControllers {
     await Promise.all([this.player1CSSCursor.setAsCPU(), this.player2CSSCursor.setAsCPU()]);
   }
 
-  async selectCharactersAndStart(player1: string, player2: string) {
+  async justSelectCharacters(player1: string, player2: string) {
     await Promise.all([
       this.player1CSSCursor.getToCharacter(player1),
       this.player2CSSCursor.getToCharacter(player2),
     ]);
+  }
+
+  async startMatch() {
     await this.player1.press(Inputs.START).execute();
     await waitFor(10000);
+  }
+
+  async selectCharactersAndStart(player1: string, player2: string) {
+    await this.justSelectCharacters(player1, player2);
+    await this.startMatch();
   }
 
   async pressAOnTheWinScreen() {

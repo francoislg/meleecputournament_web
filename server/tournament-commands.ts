@@ -3,7 +3,8 @@ import {
   MatchAdapter,
   MatchInterfaces,
   ParticipantInterfaces,
-  ParticipantAdapter
+  ParticipantAdapter,
+  TournamentInterfaces
 } from "challonge-ts";
 import { TournamentModel } from "./models/Tournament";
 import { EntryModel } from "./models/Entry";
@@ -41,6 +42,7 @@ export const finishMatch = async (
     isWinnerFirstPlayer,
   }: { winnerId: number; winnerName: string, isWinnerFirstPlayer: boolean; }
 ) => {
+  console.log(`Finishing match ${tournamentId}/${matchId}: ${winnerId}`);
   await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
     match: {
       winner_id: winnerId,
@@ -72,11 +74,21 @@ export const getNextTournament = async () => {
     CHALLONGE_API_KEY,
     tournament.tournamentId
   );
-  return {
-    id: found.tournament.id.toString(),
-    url: found.tournament.url,
-    state: found.tournament.state,
-  };
+  if (!found.tournament) {
+    console.log("Fallbacking on the tournament from db.", found);
+    // This is just a fallback, no idea why this fails sometimes.
+    return {
+      id: tournament.tournamentId,
+      url: tournament.tournamentId,
+      state: 'in_progress',
+    };
+  } else {
+    return {
+      id: found.tournament.id.toString(),
+      url: found.tournament.url,
+      state: found.tournament.state,
+    };
+  }
 };
 
 const findCompleteMatchMetaFromMatch = async (match: MatchInterfaces.matchResponseObject, participants: ParticipantInterfaces.participantResponseObject[]) => {
@@ -168,6 +180,7 @@ export const getUpcomingTournamentMatch = async (
 };
 
 export const officiallyStartMatch = async (tournamentId: string, matchId: number) => {
+  console.log("Starting a match!");
   await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
     match: {
       scores_csv: '0-0'
@@ -175,6 +188,7 @@ export const officiallyStartMatch = async (tournamentId: string, matchId: number
   });
 }
 export const createNewTournament = async () => {
+  console.log(`Creating a new tournament`)
   const count = await TournamentModel.countDocuments();
   const created = await TournamentAdapter.create(CHALLONGE_API_KEY, {
     tournament: {
@@ -192,6 +206,7 @@ export const createNewTournament = async () => {
   return tournamentId;
 };
 export const addParticipants = async (tournamentId: string) => {
+  console.log(`Adding participants for ${tournamentId}`)
   const currentParticipants = await TournamentAdapter.show(
     CHALLONGE_API_KEY,
     tournamentId
@@ -246,10 +261,12 @@ export const addParticipants = async (tournamentId: string) => {
   );
 };
 export const startTournament = async (tournamentId: string) => {
+  console.log(`Starting tournament ${tournamentId}`)
   await ParticipantAdapter.randomize(CHALLONGE_API_KEY, tournamentId);
   await TournamentAdapter.start(CHALLONGE_API_KEY, tournamentId);
 };
 export const finishTournament = async (tournamentId: string) => {
+  console.log(`Finishing tournament ${tournamentId}`)
   await TournamentAdapter.finalize(CHALLONGE_API_KEY, tournamentId);
   await TournamentModel.updateOne(
     {

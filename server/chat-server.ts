@@ -74,15 +74,15 @@ const createCommands = ({
     if (!character) {
       client.say(
         channel,
-        `${userName} didn't enter a character name. Ex: !at enter Mario 5.`
+        `${userName} didn't enter a character name. Ex: !at enter Mario.`
       );
       return;
     }
-
+/*
     if (!bet) {
-      client.say(channel, `${userName} didn't enter a bet. Ex: !at enter Mario 5.`);
+      client.say(channel, `${userName} didn't enter a bet. Ex: !at enter Mario.`);
       return;
-    }
+    }*/
 
     if (name) {
       if (name.length > MAX_NAME_LENGTH) {
@@ -105,7 +105,7 @@ const createCommands = ({
       );
       return;
     }
-
+/*
     let parsedBet;
     try {
       parsedBet = Number.parseInt(bet);
@@ -121,7 +121,7 @@ const createCommands = ({
     if (parsedBet <= 0) {
       client.say(channel, `${userName} bet an invalid number ${bet}.`);
       return;
-    }
+    }*/
 
     const user = await UserModel.findOne({
       twitchId: userId,
@@ -131,6 +131,7 @@ const createCommands = ({
       `${points} point${points > 0 ? "s" : ""}`;
 
     if (user) {
+      /*
       if (user.points === 0) {
         client.say(channel, `${userName} sadly doesn't have anything left.`);
         return;
@@ -142,19 +143,24 @@ const createCommands = ({
           `${userName} can only bet ${pointsString(user.points)}`
         );
         return;
-      }
+      }*/
 
       const newEntry = new EntryModel();
       newEntry.userId = userId;
-      newEntry.bet = parsedBet;
+      newEntry.bet = 0;
       newEntry.name = name || `${userName}'s ${foundCharacter}`;
       newEntry.character = foundCharacter;
 
-      user.points = user.points - parsedBet;
+      // user.points = user.points - parsedBet;
 
       await newEntry.save();
       await user.save();
 
+      client.say(
+        channel,
+        `${userName} entered ${foundCharacter}.`
+      );
+/*
       client.say(
         channel,
         `${userName} entered ${foundCharacter} with ${pointsString(
@@ -164,7 +170,7 @@ const createCommands = ({
             ? `have ${pointsString(user.points)}`
             : `sadly have no points left`
         }.`
-      );
+      );*/
     } else {
       client.say(
         channel,

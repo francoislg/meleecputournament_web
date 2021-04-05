@@ -50,6 +50,11 @@ export class SmashApp {
 
             if (!(await match(isPlayerOneACPU))) {
                 await this.ult.setAsCPU();
+
+                // Failsafe in case the CPU thing didn't work
+                if (!(await match(isPlayerOneACPU))) {
+                  return {};
+                }
             };
             return {
               readyForMatch: true

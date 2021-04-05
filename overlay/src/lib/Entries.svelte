@@ -6,7 +6,7 @@
 <div>
 	<h2><MeleeText text="Last Entries" /></h2>
 	{#each $entries.entries as { name, bet }, index}
-		<div>{name} ({bet}pts)</div>
+		<div>{name}</div>
 	{/each}
 </div>
 

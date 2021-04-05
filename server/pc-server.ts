@@ -24,16 +24,19 @@ export class PCServer {
   constructor(private overlay: OverlayServer) {}
 
   public connect(socket: Socket, { reconnecting }: { reconnecting: boolean }) {
-    let lastMatch: MatchMessage;
+    let lastMatch: MatchMessage | null = null;
     
     const fillAndStartTournament = async (tournamentId: string) => {
+      console.log("Creating and starting a new tournament");
       await addParticipants(tournamentId);
       await startTournament(tournamentId);
       this.overlay.updateMatchesData();
+      console.log("Tournament properly started");
       await sendNextMatch();
     };
 
     const sendNextMatch = async () => {
+      console.log("Preparing the next match.");
       try {
         const tournament = await getNextTournament();
 
@@ -47,6 +50,7 @@ export class PCServer {
               socket.emit("match", match);
               lastMatch = match;
               this.overlay.updateMatchesData();
+              console.log("Match properly sent");
             } else {
               await finishTournament(tournament.id);
               const newTournamentId = await createNewTournament();
@@ -62,6 +66,11 @@ export class PCServer {
       }
     };
 
+    const startNextMatch = async () => {
+      console.log("Sending to start the match")
+      socket.emit("startmatch");
+    }
+
     socket.on("reemitlast", () => {
       if (lastMatch) {
         socket.emit("match", lastMatch);
@@ -71,7 +80,9 @@ export class PCServer {
     socket.on(
       "winner",
       async ({ matchId, winner, loser, isWinnerFirstPlayer }) => {
+        console.log("Received a win!");
         try {
+          lastMatch = null
           const tournament = await getNextTournament();
           await finishMatch(tournament.id, matchId, {
             winnerId: winner.id,
@@ -81,11 +92,15 @@ export class PCServer {
 
           this.overlay.sendWinner({ isWinnerFirstPlayer });
 
-          const NEXT_MATCH_IN_SECONDS = 10;
+          const NEXT_MATCH_IN_SECONDS = 30;
           this.overlay.nextMatchIn(NEXT_MATCH_IN_SECONDS);
 
+          console.log(`Properly finished, match starting in ${NEXT_MATCH_IN_SECONDS} seconds`)
+
+          await sendNextMatch();
+
           setTimeout(async () => {
-            await sendNextMatch();
+            await startNextMatch();
           }, NEXT_MATCH_IN_SECONDS * 1000);
         } catch (err) {
           console.error(err);
@@ -93,10 +108,10 @@ export class PCServer {
       }
     );
 
-    if (!reconnecting) {
-      sendNextMatch();
-    } else if (lastMatch) {
+    if (reconnecting && !!lastMatch) {
       socket.emit("match", lastMatch);
+    } else {
+      sendNextMatch().then(startNextMatch);
     }
   }
 }

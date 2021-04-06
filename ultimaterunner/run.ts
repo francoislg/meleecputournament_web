@@ -1,5 +1,6 @@
 import { randomCharacter, withController } from './smashultimatecontroller';
 import { SmashApp } from './smashultimateapp';
+import { YuzuCheck } from "./yuzu"
 import { io } from 'socket.io-client';
 
 import type { MatchResponseMessage } from '../server/pc-server';
@@ -10,11 +11,6 @@ const SECRET_PC_KEY = 'zunHp5gte9kBVUiqzXYw33eN3po78L';
 export const runWithServer = async () => {
   let IS_RECONNECTING = false;
   const socket = io('ws://localhost:8080/', {});
-
-  socket.on('connect', () => {
-    socket.emit('iamtheserver', SECRET_PC_KEY, IS_RECONNECTING);
-    IS_RECONNECTING = true;
-  });
 
   let currentMatch: MatchMessage | null;
   let startCurrentMatch: boolean;
@@ -33,7 +29,7 @@ export const runWithServer = async () => {
 
   socket.on('startmatch', () => {
     startCurrentMatch = true;
-  })
+  });
 
   const askForReemit = () => {
     console.log("Asking to re emit match");
@@ -55,14 +51,31 @@ export const runWithServer = async () => {
     startCurrentMatch = false;
   }
 
+  const yuzu = new YuzuCheck();
+
+  await yuzu.boot();
+  console.log("Booted!");
+  setInterval(() => yuzu.tick(), 5000);
+
+  socket.on('connect', () => {
+    socket.emit('iamtheserver', SECRET_PC_KEY, IS_RECONNECTING);
+    IS_RECONNECTING = true;
+  });
+
   await withController(async (ult) => {
+    let nbInProgressInARow = 0;
+    let nbReadyInARow = 0;
     while (1) {
       const app = new SmashApp(ult);
 
       const { readyForMatch, playerWon, matchInProgress, nextDelay } = await app.tick();
 
       if (readyForMatch) {
-        console.log('Ready for a match!');
+        if (++nbReadyInARow > 10) {
+          nbReadyInARow = 0;
+          // Just in case
+          askForReemit();
+        }
         if (currentMatch) {
           if (!charactersSelected) {
             charactersSelected = true;
@@ -70,18 +83,38 @@ export const runWithServer = async () => {
               currentMatch.second.character);
           }
           if (startCurrentMatch) {
-            startCurrentMatch = false;
             await ult.startMatch();
+            // Failsafe if the match didn't start for some reason.
+            const {readyForMatch} = await app.tick();
+            if (!readyForMatch) {
+              startCurrentMatch = false;
+            }
           } else {
             console.log("Server did not send the OK");
           }
+        } else if (startCurrentMatch) {
+          console.log("Have no match but it's ready, need to reemit!");
+          askForReemit();
+        } else {
+          console.log("Waiting for a match")
         }
+      } else {
+        nbReadyInARow = 0;
       }
 
       if (matchInProgress) {
+        if (++nbInProgressInARow > 10) {
+          nbInProgressInARow = 0;
+          console.log("Pressing A just in case we are in the starting cinematic")
+          await ult.pressAOnTheWinScreen();
+          await waitFor(500);
+          await ult.pressAOnTheWinScreen();
+        }
         if (!currentMatch) {
           askForReemit();
         }
+      } else {
+        nbInProgressInARow = 0;
       }
 
       if (playerWon) {

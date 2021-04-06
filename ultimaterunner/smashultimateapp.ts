@@ -52,7 +52,9 @@ export class SmashApp {
                 await this.ult.setAsCPU();
 
                 // Failsafe in case the CPU thing didn't work
+                await capture();
                 if (!(await match(isPlayerOneACPU))) {
+                  console.log("Player 1 is still not a cpu somehow")
                   return {};
                 }
             };

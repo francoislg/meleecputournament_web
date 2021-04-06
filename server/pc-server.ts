@@ -21,11 +21,10 @@ export interface MatchResponseMessage {
 }
 
 export class PCServer {
+  private lastMatch: MatchMessage | null = null;
   constructor(private overlay: OverlayServer) {}
 
-  public connect(socket: Socket, { reconnecting }: { reconnecting: boolean }) {
-    let lastMatch: MatchMessage | null = null;
-    
+  public async connect(socket: Socket, { reconnecting }: { reconnecting: boolean }) {
     const fillAndStartTournament = async (tournamentId: string) => {
       console.log("Creating and starting a new tournament");
       await addParticipants(tournamentId);
@@ -48,7 +47,7 @@ export class PCServer {
             if (match) {
               await officiallyStartMatch(tournament.id, match.matchId);
               socket.emit("match", match);
-              lastMatch = match;
+              this.lastMatch = match;
               this.overlay.updateMatchesData();
               console.log("Match properly sent");
             } else {
@@ -62,18 +61,21 @@ export class PCServer {
           await fillAndStartTournament(newTournamentId);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error in sendNextMatch handle", err);
       }
     };
 
-    const startNextMatch = async () => {
+    const sendStartNextMatch = async () => {
       console.log("Sending to start the match")
       socket.emit("startmatch");
     }
 
-    socket.on("reemitlast", () => {
-      if (lastMatch) {
-        socket.emit("match", lastMatch);
+    socket.on("reemitlast", async () => {
+      if (this.lastMatch) {
+        socket.emit("match", this.lastMatch);
+        await sendStartNextMatch();
+      } else {
+        await sendNextMatch();
       }
     });
 
@@ -81,14 +83,29 @@ export class PCServer {
       "winner",
       async ({ matchId, winner, loser, isWinnerFirstPlayer }) => {
         console.log("Received a win!");
+        let registeredWin = false;
+        const registerWin = async () => {
+          try {
+            const tournament = await getNextTournament();
+            await finishMatch(tournament.id, matchId, {
+              winnerId: winner.id,
+              winnerName: winner.name,
+              isWinnerFirstPlayer,
+            });
+            return true;
+          } catch (err) {
+            console.error("Error while registering win, will retry", err);
+            return false;
+          }
+        }
         try {
-          lastMatch = null
-          const tournament = await getNextTournament();
-          await finishMatch(tournament.id, matchId, {
-            winnerId: winner.id,
-            winnerName: winner.name,
-            isWinnerFirstPlayer,
-          });
+          registeredWin = await registerWin();
+          while (!registeredWin) {
+            await waitFor(5000);
+            registeredWin = await registerWin();
+          }
+          
+          this.lastMatch = null
 
           this.overlay.sendWinner({ isWinnerFirstPlayer });
 
@@ -100,18 +117,22 @@ export class PCServer {
           await sendNextMatch();
 
           setTimeout(async () => {
-            await startNextMatch();
+            await sendStartNextMatch();
           }, NEXT_MATCH_IN_SECONDS * 1000);
         } catch (err) {
-          console.error(err);
+          console.error("Error in winner handle", err);
         }
       }
     );
 
-    if (reconnecting && !!lastMatch) {
-      socket.emit("match", lastMatch);
+    if (reconnecting && !!this.lastMatch) {
+      console.log("Reconnecting");
+      socket.emit("match", this.lastMatch);
     } else {
-      sendNextMatch().then(startNextMatch);
+      await sendNextMatch();
+      await sendStartNextMatch();
     }
   }
 }
+
+const waitFor = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

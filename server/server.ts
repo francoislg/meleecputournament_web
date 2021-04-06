@@ -23,14 +23,14 @@ connectToMongo().then(() => {
   server.on("connect", (socket: Socket) => {
     console.log(`connect ${socket.id}`);
 
-    socket.on("iamtheserver", (key, reconnecting) => {
+    socket.on("iamtheserver", async (key, reconnecting) => {
       if (key !== SECRET_PC_KEY) {
         throw new Error("Could not connect");
       }
 
       console.log(`Server ${reconnecting ? "reconnecting" : "connected"}`);
 
-      pcServer.connect(socket, {reconnecting});
+      await pcServer.connect(socket, {reconnecting});
     });
 
     socket.on("iamtheoverlay", async (key) => {

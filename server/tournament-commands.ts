@@ -64,6 +64,7 @@ export const finishMatch = async (
   }
 };
 export const getNextTournament = async () => {
+  console.log("Getting the current tournament");
   const tournament = await TournamentModel.findOne({
     inProgress: true,
   });
@@ -121,6 +122,7 @@ const findCompleteMatchMetaFromMatch = async (match: MatchInterfaces.matchRespon
 export const getNextTournamentMatch = async (
   tournamentId: string
 ): Promise<MatchMessage | null> => {
+  console.log("Getting the next tournament match");
   const tournament = await TournamentAdapter.show(
     CHALLONGE_API_KEY,
     tournamentId,

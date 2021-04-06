@@ -16,12 +16,16 @@ import {
   isMatchInProgress,
 } from './smashultimatestates';
 import { AppState, stateMatcher } from './states';
+import {YuzuCheck} from "./yuzu";
 
 const FULL_SCREEN_FILE = `${REFERENCES_FOLDER}/fullscreen.png`;
 const WINDOW_FILE = `${REFERENCES_FOLDER}/window.png`;
 
 export const setup = async () => {
-  console.log('Starting the setup, please boot the game.');
+  console.log('Starting the setup, booting the game.');
+
+  const yuzu = new YuzuCheck();
+  await yuzu.boot();
 
   const screen = getScreenSize();
   console.log('Screen size:', screen);
@@ -140,7 +144,7 @@ export const setup = async () => {
         );
 
         await ult.pressAOnTheWinScreen();
-      } else if (!(await yesnoQuestion(`Are you already on the winner detection?`))) {
+      } else if (await yesnoQuestion(`Are you in the first victory screen where you can't see the winner positions yet?`)) {
         await captureAndSave(
           regionOffset(windowOffset, isMatchOver.region),
           isMatchOver.referenceFile
@@ -152,7 +156,7 @@ export const setup = async () => {
       let done: boolean;
       do {
         const player = await question(
-          'Enter the player that won (1|2). Be careful on this step, the screenshot should not include shines if possible'
+          'Enter the player that won (1|2|skip). Be careful on this step, the screenshot should not include shines if possible'
         );
 
         if (player === '1') {

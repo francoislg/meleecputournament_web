@@ -56,12 +56,11 @@ export const captureImage = ({ x, y, w, h }: Region) => {
 
 export const getReference = async (file: string) => new Image(await Jimp.read(file));
 
-class Image {
+export class Image {
   constructor(protected image: Jimp) {}
 
   isMatching({ image }: Image) {
     const diff = Jimp.diff(this.image, image).percent;
-    console.log(diff);
     return diff <= 0.01;
   }
 

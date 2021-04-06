@@ -178,7 +178,6 @@ export class SmashUltimateControllers {
 
   async startMatch() {
     await this.player1.press(Inputs.START).execute();
-    await waitFor(10000);
   }
 
   async selectCharactersAndStart(player1: string, player2: string) {

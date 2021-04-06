@@ -38,6 +38,8 @@ export class SmashApp {
 
     const state = await this.getNextState();
 
+    console.log(state);
+
     switch (state) {
         case SmashState.MAIN_MENU:
             await this.ult.getToRuleSetFromStart();

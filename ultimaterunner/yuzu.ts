@@ -8,6 +8,8 @@ import { spawn } from 'child_process';
 const YUZU_PATH = "C:\\Users\\Fanfo\\AppData\\Local\\yuzu\\yuzu-windows-msvc\\yuzu.exe";
 const SMASH_PATH = "D:\\Yuzu\\Super Smash Bros Ultimate [01006A800016E000][v0].nsp";
 
+const NB_FRAME_FREEZE_DETECTION = 3;
+
 export class YuzuCheck {
   private ticks: number = 0;
   private previousImages: Image[] = [];
@@ -22,16 +24,16 @@ export class YuzuCheck {
     if (this.ticks % 5 === 1) {
       this.startYuzuIfNotStarted();
 
-      if (this.previousImages.length >= 5) {
+      if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
         this.previousImages.shift();
       }
       this.previousImages.push(await capture());
 
-      if (this.previousImages.length >= 5) {
+      if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
         const firstImage = this.previousImages[0];
         const areAllSimilar = this.previousImages.every((im) => im.isMatching(firstImage));
         if (areAllSimilar) {
-          console.log('RESTARTINGR');
+          console.log('FREEZE DETECTED, RESTARTING');
           await this.restartYuzu();
         }
       }
@@ -47,7 +49,8 @@ export class YuzuCheck {
         const spawned = spawn(YUZU_PATH, [SMASH_PATH], { detached: true });
         spawned.unref();
 
-        console.log("Waiting a bit to refresh Yuzu to fix the bug");
+        console.log("Waiting 30 seconds for Yuzu to boot");
+        await waitFor(30000);
         /*await waitFor(20000);
         robot.keyTap("F6");
         console.log("F6, hope it fixed it");*/
@@ -66,7 +69,7 @@ export class YuzuCheck {
             }
 
             const yuzus = resultList.filter((r: any) => r.command.indexOf("yuzu") !== -1);
-            console.log("yuzu instances", yuzus);
+            console.log("yuzu instances", yuzus.map((y: any) => y.pid));
 
             resolve(yuzus[0]?.pid || null);
         });
@@ -94,3 +97,5 @@ export class YuzuCheck {
     await this.startYuzuIfNotStarted();
   }
 }
+
+const waitFor = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

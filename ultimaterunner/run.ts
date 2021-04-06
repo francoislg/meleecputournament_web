@@ -34,6 +34,7 @@ export const runWithServer = async () => {
   const askForReemit = () => {
     console.log("Asking to re emit match");
     socket.emit('reemitlast');
+    charactersSelected = false;
   }
 
   const reportWinner = (player: number, match: MatchMessage) => {
@@ -84,10 +85,11 @@ export const runWithServer = async () => {
           }
           if (startCurrentMatch) {
             await ult.startMatch();
+            await waitFor(2000);
             // Failsafe if the match didn't start for some reason.
             const {readyForMatch} = await app.tick();
-            if (!readyForMatch) {
-              startCurrentMatch = false;
+            if (readyForMatch) {
+              charactersSelected = false;
             }
           } else {
             console.log("Server did not send the OK");

@@ -26,7 +26,6 @@ export const stateMatcher = () => {
     }
     const reference = await getReference(state.referenceFile);
     const cropped = await image.getRegion(state.region);
-    cropped.save('bloup.png');
     return reference.isMatching(cropped);
   };
   return {

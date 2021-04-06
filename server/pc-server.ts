@@ -20,8 +20,9 @@ export interface MatchResponseMessage {
   matchId: number;
 }
 
+let lastMatch: MatchMessage | null = null;
+
 export class PCServer {
-  private lastMatch: MatchMessage | null = null;
   constructor(private overlay: OverlayServer) {}
 
   public async connect(socket: Socket, { reconnecting }: { reconnecting: boolean }) {
@@ -47,7 +48,7 @@ export class PCServer {
             if (match) {
               await officiallyStartMatch(tournament.id, match.matchId);
               socket.emit("match", match);
-              this.lastMatch = match;
+              lastMatch = match;
               this.overlay.updateMatchesData();
               console.log("Match properly sent");
             } else {
@@ -61,7 +62,8 @@ export class PCServer {
           await fillAndStartTournament(newTournamentId);
         }
       } catch (err) {
-        console.error("Error in sendNextMatch handle", err);
+        console.error("Error in sendNextMatch handle, trying again in 5 seconds", err);
+        setTimeout(sendNextMatch, 5000);
       }
     };
 
@@ -71,11 +73,13 @@ export class PCServer {
     }
 
     socket.on("reemitlast", async () => {
-      if (this.lastMatch) {
-        socket.emit("match", this.lastMatch);
+      console.log("Received a reemit")
+      if (lastMatch) {
+        socket.emit("match", lastMatch);
         await sendStartNextMatch();
       } else {
         await sendNextMatch();
+        await sendStartNextMatch();
       }
     });
 
@@ -105,7 +109,7 @@ export class PCServer {
             registeredWin = await registerWin();
           }
           
-          this.lastMatch = null
+          lastMatch = null
 
           this.overlay.sendWinner({ isWinnerFirstPlayer });
 
@@ -125,9 +129,9 @@ export class PCServer {
       }
     );
 
-    if (reconnecting && !!this.lastMatch) {
+    if (reconnecting && !!lastMatch) {
       console.log("Reconnecting");
-      socket.emit("match", this.lastMatch);
+      socket.emit("match", lastMatch);
     } else {
       await sendNextMatch();
       await sendStartNextMatch();

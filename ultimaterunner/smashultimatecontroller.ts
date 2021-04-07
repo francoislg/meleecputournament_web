@@ -136,10 +136,10 @@ export class SmashUltimateControllers {
   }
 
   async startTheGame() {
-    await this.player1.press(Inputs.START).execute();
-    await waitFor(2000);
-    await this.player1.press(Inputs.START).execute();
-    await waitFor(3000);
+    await this.player1.press(Inputs.A).execute();
+    await waitFor(5000);
+    await this.player1.press(Inputs.A).execute();
+    await waitFor(5000);
   }
 
   async getToRuleSetFromStart() {

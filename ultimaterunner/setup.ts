@@ -24,32 +24,32 @@ const WINDOW_FILE = `${REFERENCES_FOLDER}/window.png`;
 export const setup = async () => {
   console.log('Starting the setup, booting the game.');
 
-  const yuzu = new YuzuCheck();
-  await yuzu.boot();
-
-  const screen = getScreenSize();
-  console.log('Screen size:', screen);
-
-  const captureAndSave = async (region: Region, fileName: string) => {
-    const image = await captureImage(region);
-    await image.save(fileName);
-  };
-
-  let valid = false;
-  let windowOffset = { x: 0, y: 0 };
-  const windowUpdate = async () =>
-    await captureAndSave({ x: windowOffset.x, y: windowOffset.y, ...WINDOW_SIZE }, WINDOW_FILE);
-  do {
-    await captureAndSave({ x: 0, y: 0, w: screen.width, h: screen.height }, FULL_SCREEN_FILE);
-
-    windowOffset = await screenSetup();
-    await windowUpdate();
-    valid = await yesnoQuestion(`Please validate ${WINDOW_FILE}, does it seem correct?`);
-  } while (!valid);
-
-  type OnReferenceFinish = () => Promise<void>;
-
   await withController(async (ult) => {
+    const yuzu = new YuzuCheck(ult);
+    await yuzu.boot();
+
+    const screen = getScreenSize();
+    console.log('Screen size:', screen);
+
+    const captureAndSave = async (region: Region, fileName: string) => {
+      const image = await captureImage(region);
+      await image.save(fileName);
+    };
+
+    let valid = false;
+    let windowOffset = { x: 0, y: 0 };
+    const windowUpdate = async () =>
+      await captureAndSave({ x: windowOffset.x, y: windowOffset.y, ...WINDOW_SIZE }, WINDOW_FILE);
+    do {
+      await captureAndSave({ x: 0, y: 0, w: screen.width, h: screen.height }, FULL_SCREEN_FILE);
+
+      windowOffset = await screenSetup();
+      await windowUpdate();
+      valid = await yesnoQuestion(`Please validate ${WINDOW_FILE}, does it seem correct?`);
+    } while (!valid);
+
+    type OnReferenceFinish = () => Promise<void>;
+
     if (
       await yesnoQuestion(
         `Do you want to update all the menu references? Ensure that your game is freshly booted.`

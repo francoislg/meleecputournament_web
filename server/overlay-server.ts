@@ -2,6 +2,7 @@ import type { Socket } from "socket.io";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
 import {
+  getBetsForMatch,
   getNextTournament,
   getNextTournamentMatch,
   getUpcomingTournamentMatch,
@@ -25,19 +26,31 @@ export interface IPlayerInLeaderboard {
 
 export interface MatchesInfo {
   tournamentUrl?: string;
-  current?: MatchMessage;
-  upcoming?: MatchMessage;
+  current?: {
+    match: MatchMessage;
+    bets: {
+      player1: number;
+      player2: number;
+    };
+  };
+  upcoming?: {
+    match: MatchMessage;
+    bets: {
+      player1: number;
+      player2: number;
+    };
+  };
 }
 
 export interface EntryInfo {
   name: string;
   character: string;
   bet: number;
-  userName: string
+  userName: string;
 }
 
 export interface EntriesInfo {
-  entries: EntryInfo[]
+  entries: EntryInfo[];
 }
 
 export interface IWinnerInfo {
@@ -65,36 +78,45 @@ const getMatches = async (): Promise<MatchesInfo> => {
 
     return {
       tournamentUrl: tournament.url,
-      current: match,
-      upcoming: upcoming,
+      ...(match ? {
+        current: {
+          match,
+          bets: await getBetsForMatch(tournament.id, match.matchId),
+        }
+      } : {}),
+      ...(upcoming ? {
+        upcoming: {
+          match: upcoming,
+          bets: await getBetsForMatch(tournament.id, upcoming.matchId),
+        }
+      } : {})
     };
   } else {
-    return {
-      current: null,
-      upcoming: null,
-    };
+    return {};
   }
 };
 
 const getLatestEntries = async (): Promise<EntriesInfo> => {
   const entries = await EntryModel.find({
-    tournamentId: null
-  }).sort({
-    createdAt: -1
-  }).limit(5);
+    tournamentId: null,
+  })
+    .sort({
+      createdAt: -1,
+    })
+    .limit(5);
   const relatedUsers = await UserModel.find({
     twitchId: {
-      $in: entries.map(entry => entry.userId),
-    }
+      $in: entries.map((entry) => entry.userId),
+    },
   });
 
   return {
-    entries: entries.map(({name, character, bet, userId}) => ({
+    entries: entries.map(({ name, character, bet, userId }) => ({
       name,
       character,
       bet,
-      userName: relatedUsers.find(u => u.twitchId === userId)?.twitchUsername
-    }))
+      userName: relatedUsers.find((u) => u.twitchId === userId)?.twitchUsername,
+    })),
   };
 };
 
@@ -129,10 +151,14 @@ export class OverlayServer {
     this.emitAll("nextmatchin", timeInSeconds);
   }
 
-  async sendWinner({isWinnerFirstPlayer}) {
+  async startMatch() {
+    this.emitAll("startmatch");
+  }
+
+  async sendWinner({ isWinnerFirstPlayer }) {
     this.emitAll("winner", {
       isWinnerFirstPlayer,
-    })
+    });
   }
 
   emitAll: Socket["emit"] = (ev, ...args): boolean => {

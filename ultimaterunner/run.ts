@@ -52,18 +52,18 @@ export const runWithServer = async () => {
     startCurrentMatch = false;
   }
 
-  const yuzu = new YuzuCheck();
-
-  await yuzu.boot();
-  console.log("Booted!");
-  setInterval(() => yuzu.tick(), 5000);
-
   socket.on('connect', () => {
     socket.emit('iamtheserver', SECRET_PC_KEY, IS_RECONNECTING);
     IS_RECONNECTING = true;
   });
 
   await withController(async (ult) => {
+    const yuzu = new YuzuCheck(ult);
+
+    await yuzu.boot();
+    console.log("Booted!");
+    setInterval(() => yuzu.tick(), 5000);
+
     let nbInProgressInARow = 0;
     let nbReadyInARow = 0;
     while (1) {
@@ -89,6 +89,7 @@ export const runWithServer = async () => {
             // Failsafe if the match didn't start for some reason.
             const {readyForMatch} = await app.tick();
             if (readyForMatch) {
+              console.log("Resetting the character selection, looks like it didn't start the match")
               charactersSelected = false;
             }
           } else {
@@ -107,10 +108,10 @@ export const runWithServer = async () => {
       if (matchInProgress) {
         if (++nbInProgressInARow > 10) {
           nbInProgressInARow = 0;
-          console.log("Pressing A just in case we are in the starting cinematic")
-          await ult.pressAOnTheWinScreen();
+          console.log("Might be stuck?")
+          /*await ult.pressAOnTheWinScreen();
           await waitFor(500);
-          await ult.pressAOnTheWinScreen();
+          await ult.pressAOnTheWinScreen();*/
         }
         if (!currentMatch) {
           askForReemit();

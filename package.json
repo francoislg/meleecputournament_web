@@ -1,0 +1,8 @@
+{
+    "scripts": {
+        "start": "concurrently \"cd overlay && npm run dev\" \"cd server && npm run start\" \"cd ultimaterunner && npm run start\""
+    },
+    "dependencies": {
+        "concurrently": "^6.0.1"
+    }
+}

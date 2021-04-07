@@ -9,3 +9,9 @@
 		<div>#{index + 1} - {name} {points}pts</div>
 	{/each}
 </div>
+
+<style>
+	h2 {
+		text-align: center;
+	}
+</style>

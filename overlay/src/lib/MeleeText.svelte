@@ -9,6 +9,7 @@
 		background: -webkit-linear-gradient(black, darkred);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
+		text-shadow: none;
 	}
 
 	span::before {
@@ -16,6 +17,6 @@
         z-index: -1;
 		content: attr(data-text);
 		-webkit-text-stroke: 2px white;
-        text-shadow: 1px 1px 5px #000000;
+        text-shadow: 1px 1px 5px black, 1px 1px 5px black;
 	}
 </style>

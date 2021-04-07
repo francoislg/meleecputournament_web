@@ -4,12 +4,12 @@ import {
   MatchInterfaces,
   ParticipantInterfaces,
   ParticipantAdapter,
-  TournamentInterfaces
 } from "challonge-ts";
 import { TournamentModel } from "./models/Tournament";
 import { EntryModel } from "./models/Entry";
 import { randomCharacter } from "./constants";
 import { UserModel } from "./models/User";
+import { BetModel } from "./models/Bet";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
@@ -40,7 +40,7 @@ export const finishMatch = async (
     winnerId,
     winnerName,
     isWinnerFirstPlayer,
-  }: { winnerId: number; winnerName: string, isWinnerFirstPlayer: boolean; }
+  }: { winnerId: number; winnerName: string; isWinnerFirstPlayer: boolean }
 ) => {
   console.log(`Finishing match ${tournamentId}/${matchId}: ${winnerId}`);
   await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
@@ -51,17 +51,20 @@ export const finishMatch = async (
   });
   const entry = await EntryModel.findOne({
     tournamentId: tournamentId,
-    name: winnerName
+    name: winnerName,
   });
-  if (entry.userId) {
-    await UserModel.updateOne({
-      twitchId: entry.userId,
-    }, {
-      $inc: {
-        points: 5
-      }
-    })
+  if (entry?.userId) {
+    await givePointsToUser(entry.userId, 5);
   }
+  const bets = await BetModel.find({
+    matchId,
+    tournamentId,
+    player: isWinnerFirstPlayer ? 1 : 2
+  });
+
+  await Promise.all(bets.map(async ({userId, bet}) => {
+    await givePointsToUser(userId, bet * 2);
+  }))
 };
 export const getNextTournament = async () => {
   console.log("Getting the current tournament");
@@ -81,7 +84,7 @@ export const getNextTournament = async () => {
     return {
       id: tournament.tournamentId,
       url: tournament.tournamentId,
-      state: 'in_progress',
+      state: "in_progress",
     };
   } else {
     return {
@@ -92,7 +95,10 @@ export const getNextTournament = async () => {
   }
 };
 
-const findCompleteMatchMetaFromMatch = async (match: MatchInterfaces.matchResponseObject, participants: ParticipantInterfaces.participantResponseObject[]) => {
+const findCompleteMatchMetaFromMatch = async (
+  match: MatchInterfaces.matchResponseObject,
+  participants: ParticipantInterfaces.participantResponseObject[]
+) => {
   const matchId = match.id;
   const findParticipant = async (id) => {
     const participant = participants.find(
@@ -109,15 +115,15 @@ const findCompleteMatchMetaFromMatch = async (match: MatchInterfaces.matchRespon
     first: {
       id: match.player1_id,
       character: firstParticipant?.character || "???",
-      name: firstParticipant?.name || "???",
+      name: firstParticipant?.name || "Winner of the current match",
     },
     second: {
       id: match.player2_id,
       character: secondParticipant?.character || "???",
-      name: secondParticipant?.name || "???",
+      name: secondParticipant?.name || "Winner of the current match",
     },
   };
-}
+};
 
 export const getNextTournamentMatch = async (
   tournamentId: string
@@ -137,7 +143,8 @@ export const getNextTournamentMatch = async (
     (match) => (match as any).match as MatchInterfaces.matchResponseObject
   );
   const participants = tournament.tournament.participants.map(
-    (p) => (p as any).participant as ParticipantInterfaces.participantResponseObject
+    (p) =>
+      (p as any).participant as ParticipantInterfaces.participantResponseObject
   );
   const firstOpenMatch = matches.find((match) => match.state == "open");
 
@@ -164,7 +171,8 @@ export const getUpcomingTournamentMatch = async (
     (match) => (match as any).match as MatchInterfaces.matchResponseObject
   );
   const participants = tournament.tournament.participants.map(
-    (p) => (p as any).participant as ParticipantInterfaces.participantResponseObject
+    (p) =>
+      (p as any).participant as ParticipantInterfaces.participantResponseObject
   );
   const openMatches = matches.filter((match) => match.state == "open");
 
@@ -181,21 +189,43 @@ export const getUpcomingTournamentMatch = async (
   return null;
 };
 
-export const officiallyStartMatch = async (tournamentId: string, matchId: number) => {
+export const getBetsForMatch = async (
+  tournamentId: string,
+  matchId: number
+): Promise<{ player1: number; player2: number }> => {
+  const bets = await BetModel.find({
+    matchId,
+    tournamentId,
+  });
+  const [p1, p2] = bets.reduce((all, {player, bet}) => {
+    all[(player - 1)] += bet;
+    return all;
+  }, [0, 0]);
+  return {
+    player1: p1,
+    player2: p2,
+  };
+};
+
+export const officiallyStartMatch = async (
+  tournamentId: string,
+  matchId: number
+) => {
   console.log("Starting a match!");
   await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
     match: {
-      scores_csv: '0-0'
-    }
+      scores_csv: "0-0",
+    },
   });
-}
+};
 export const createNewTournament = async () => {
-  console.log(`Creating a new tournament`)
+  console.log(`Creating a new tournament`);
   const count = await TournamentModel.countDocuments();
   const created = await TournamentAdapter.create(CHALLONGE_API_KEY, {
     tournament: {
       name: `Ultimate CPU Tournament #${count}`,
-      description: "An automated tournament, see https://www.twitch.tv/autotournaments",
+      description:
+        "An automated tournament, see https://www.twitch.tv/autotournaments",
       url: `ultimatecputournament_test${count}`,
     },
   });
@@ -208,23 +238,26 @@ export const createNewTournament = async () => {
   return tournamentId;
 };
 export const addParticipants = async (tournamentId: string) => {
-  console.log(`Adding participants for ${tournamentId}`)
+  console.log(`Adding participants for ${tournamentId}`);
   const currentParticipants = await TournamentAdapter.show(
     CHALLONGE_API_KEY,
     tournamentId
   );
-  const currentNumberOfParticipants = currentParticipants.tournament.participants_count;
-  const numberOfEmptySpots = getEvenNumber(MAXIMUM_NUMBER_OF_PARTICIPANTS - currentNumberOfParticipants);
+  const currentNumberOfParticipants =
+    currentParticipants.tournament.participants_count;
+  const numberOfEmptySpots = getEvenNumber(
+    MAXIMUM_NUMBER_OF_PARTICIPANTS - currentNumberOfParticipants
+  );
 
   const playersToAdd = await EntryModel.find({
     tournamentId: null,
   }).limit(numberOfEmptySpots);
 
-  const numberExistingPlusNewParticipants = playersToAdd.length + currentNumberOfParticipants;
+  const numberExistingPlusNewParticipants =
+    playersToAdd.length + currentNumberOfParticipants;
 
   let playersToCreate = 0;
-  if (numberExistingPlusNewParticipants <
-    MINIMUM_NUMBER_OF_PARTICIPANTS) {
+  if (numberExistingPlusNewParticipants < MINIMUM_NUMBER_OF_PARTICIPANTS) {
     playersToCreate = MINIMUM_NUMBER_OF_PARTICIPANTS - playersToAdd.length;
   } else if (numberExistingPlusNewParticipants % 2) {
     playersToCreate = 1;
@@ -246,7 +279,7 @@ export const addParticipants = async (tournamentId: string) => {
 
   await ParticipantAdapter.bulkAdd(CHALLONGE_API_KEY, tournamentId, {
     participants: playersToAdd.map((p) => ({
-      name: `${p.name}${p.bet ? ` (${p.bet} points)` : ''} - ${p.id}`,
+      name: `${p.name}${p.bet ? ` (${p.bet} points)` : ""} - ${p.id}`,
       misc: p.id,
     })),
   });
@@ -263,12 +296,12 @@ export const addParticipants = async (tournamentId: string) => {
   );
 };
 export const startTournament = async (tournamentId: string) => {
-  console.log(`Starting tournament ${tournamentId}`)
+  console.log(`Starting tournament ${tournamentId}`);
   await ParticipantAdapter.randomize(CHALLONGE_API_KEY, tournamentId);
   await TournamentAdapter.start(CHALLONGE_API_KEY, tournamentId);
 };
 export const finishTournament = async (tournamentId: string) => {
-  console.log(`Finishing tournament ${tournamentId}`)
+  console.log(`Finishing tournament ${tournamentId}`);
   await TournamentAdapter.finalize(CHALLONGE_API_KEY, tournamentId);
   await TournamentModel.updateOne(
     {
@@ -279,13 +312,40 @@ export const finishTournament = async (tournamentId: string) => {
     }
   );
 };
+export const givePointsToUser = async (twitchId: string, points: number) => {
+  await UserModel.updateOne(
+    {
+      twitchId,
+    },
+    {
+      $inc: {
+        points,
+      },
+    }
+  );
+  console.log(`Gave ${points} to ${twitchId}`);
+};
 export const givePointsToWinner = async (tournamentId: string) => {
   try {
-    const participants = await ParticipantAdapter.index(CHALLONGE_API_KEY, tournamentId);
-    const winner = participants.participants.find(participant => participant.final_rank === 1);
+    const participants = await ParticipantAdapter.index(
+      CHALLONGE_API_KEY,
+      tournamentId
+    );
+    const winner = participants.participants.find(
+      (participant) => participant.final_rank === 1
+    );
     const entry = await EntryModel.findById(winner.misc);
     if (entry) {
       if (entry.userId) {
+        await TournamentModel.updateOne(
+          {
+            tournamentId,
+          },
+          {
+            winnerId: entry.userId,
+          }
+        );
+        /*
         const allTournamentEntries = await EntryModel.find({
           tournamentId,
         });
@@ -296,15 +356,16 @@ export const givePointsToWinner = async (tournamentId: string) => {
           $inc: {
             points: totalPoints
           }
-        });
-        console.log(`Gave ${totalPoints} to ${entry.userId}`);
+        });*/
+        const totalPoints = 50;
+        await givePointsToUser(entry.userId, totalPoints);
       } else {
-        console.error("A bot won, too bad.");
+        console.error("TOURNAMENT RESULT: A bot won, too bad.");
       }
     } else {
-      console.error("no matching entry?!");
+      console.error("TOURNAMENT RESULT: no matching entry?!");
     }
   } catch (error) {
-    console.error("meh, didn't work", error);
+    console.error("TOURNAMENT RESULT: meh, didn't work", error);
   }
 };

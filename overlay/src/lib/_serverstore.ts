@@ -89,12 +89,12 @@ export const nextMatchInSeconds = readable<number | null>(null, (set) => {
         }, 1000);
     };
     socket.on("nextmatchin", onNextMatchIn);
-    const onMatches = () => set(null);
-    socket.on("matches", onMatches);
+    const onStartMatch = () => set(null);
+    socket.on("startmatch", onStartMatch);
 
     return () => {
         clearInterval(interval);
         socket.off("nextmatchin", onNextMatchIn);
-        socket.off("matches", onMatches);
+        socket.off("startmatch", onStartMatch);
     }
 });

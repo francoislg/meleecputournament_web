@@ -70,6 +70,7 @@ export class PCServer {
     const sendStartNextMatch = async () => {
       console.log("Sending to start the match")
       socket.emit("startmatch");
+      this.overlay.startMatch();
     }
 
     socket.on("reemitlast", async () => {

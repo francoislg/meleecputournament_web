@@ -7,6 +7,7 @@
 	<div class="match">
 		<div class="left">
 			{$matches.current.match.first.name}
+			<span class="character">({$matches.current.match.first.character})</span>
 			{#if $winner && $winner.isWinnerFirstPlayer}
 				- <MeleeText text="WINNER" />
 			{/if}
@@ -14,6 +15,7 @@
 		</div>
 		<div class="right">
 			{$matches.current.match.second.name}
+			<span class="character">({$matches.current.match.second.character})</span>
 			{#if $winner && !$winner.isWinnerFirstPlayer}
 				- <MeleeText text="WINNER" />
 			{/if}
@@ -43,6 +45,10 @@
 		position: absolute;
 		right: 50px;
 		text-align: right;
+	}
+
+	.character {
+		font-size: 0.5em;
 	}
 
 	.points {

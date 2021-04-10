@@ -22,8 +22,6 @@ export const hasSingleMatchInProgress = async () => {
     winner: 0,
   });
 
-  console.log(match);
-
   return match !== null;
 };
 

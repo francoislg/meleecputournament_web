@@ -318,6 +318,7 @@ export const finishTournament = async (tournamentId: string) => {
       inProgress: false,
     }
   );
+  await givePointsToWinner(tournamentId);
 };
 export const givePointsToUser = async (twitchId: string, points: number) => {
   await UserModel.updateOne(

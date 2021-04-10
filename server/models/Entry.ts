@@ -5,7 +5,6 @@ const entry = new Schema(
     name: String!,
     character: String!,
     userId: String,
-    bet: Number,
     tournamentId: String,
   },
   {
@@ -17,8 +16,7 @@ export interface IEntryModel {
   name: string;
   character: string;
   userId?: string;
-  bet?: number;
-  tournamentId?: string;
+  tournamentId: string | null;
 }
 
 export const EntryModel = model<IEntryModel & Document>(

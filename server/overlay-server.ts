@@ -2,6 +2,12 @@ import type { Socket } from "socket.io";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
 import {
+  getBetsForSingleMatch,
+  getNextSingleMatch,
+  getUpcomingSingleMatch,
+  hasSingleMatchInProgress,
+} from "./singlematches-commands";
+import {
   getBetsForMatch,
   getNextTournament,
   getNextTournamentMatch,
@@ -45,7 +51,6 @@ export interface MatchesInfo {
 export interface EntryInfo {
   name: string;
   character: string;
-  bet: number;
   userName: string;
 }
 
@@ -78,18 +83,44 @@ const getMatches = async (): Promise<MatchesInfo> => {
 
     return {
       tournamentUrl: tournament.url,
-      ...(match ? {
-        current: {
-          match,
-          bets: await getBetsForMatch(tournament.id, match.matchId),
-        }
-      } : {}),
-      ...(upcoming ? {
-        upcoming: {
-          match: upcoming,
-          bets: await getBetsForMatch(tournament.id, upcoming.matchId),
-        }
-      } : {})
+      ...(match
+        ? {
+            current: {
+              match,
+              bets: await getBetsForMatch(tournament.id, match.matchId),
+            },
+          }
+        : {}),
+      ...(upcoming
+        ? {
+            upcoming: {
+              match: upcoming,
+              bets: await getBetsForMatch(tournament.id, upcoming.matchId),
+            },
+          }
+        : {}),
+    };
+  } else if (await hasSingleMatchInProgress()) {
+    const match = await getNextSingleMatch();
+    const upcoming = await getUpcomingSingleMatch();
+
+    return {
+      ...(match
+        ? {
+            current: {
+              match,
+              bets: await getBetsForSingleMatch(match.matchId),
+            },
+          }
+        : {}),
+      ...(upcoming
+        ? {
+            upcoming: {
+              match: upcoming,
+              bets: await getBetsForSingleMatch(upcoming.matchId),
+            },
+          }
+        : {}),
     };
   } else {
     return {};
@@ -111,10 +142,9 @@ const getLatestEntries = async (): Promise<EntriesInfo> => {
   });
 
   return {
-    entries: entries.map(({ name, character, bet, userId }) => ({
+    entries: entries.map(({ name, character, userId }) => ({
       name,
       character,
-      bet,
       userName: relatedUsers.find((u) => u.twitchId === userId)?.twitchUsername,
     })),
   };

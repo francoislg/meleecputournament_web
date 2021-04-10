@@ -64,7 +64,7 @@ export class YuzuCheck {
   async getCurrentYuzuIfExist() {
     return new Promise<number | null>((resolve) => {
       // Improve this one day :shrug:
-        lookup({}, function(err: any, resultList: any) {
+        lookup({}, (err: any, resultList: any) => {
             if (err) {
               console.error(err);
                 resolve(null);
@@ -73,6 +73,10 @@ export class YuzuCheck {
             const yuzus = resultList.filter((r: any) => r.command.indexOf("yuzu") !== -1);
             console.log("yuzu instances", yuzus.map((y: any) => y.pid));
 
+            if (yuzus.length > 1) {
+              this.tryToKill(yuzus[1].pid);
+            }
+
             resolve(yuzus[0]?.pid || null);
         });
     });
@@ -80,23 +84,27 @@ export class YuzuCheck {
 
   async stopYuzu() {
       if (this.yuzuProcess) {
-        await new Promise<void>((resolve) => {
-          try {
-            kill(this.yuzuProcess, 'SIGKILL', (err: string) => {
-              err && console.error(err);
-              resolve();
-            });
-          } catch (ex) {
-            console.error("Could not kill Yuzu", ex);
-            resolve();
-          }
-        });
+        await this.tryToKill(this.yuzuProcess);
     }
   }
 
   async restartYuzu() {
     await this.stopYuzu();
     await this.startYuzuIfNotStarted();
+  }
+  
+  async tryToKill(pid: string | number) {
+    return new Promise<void>((resolve) => {
+      try {
+        kill(`${pid}`, 'SIGKILL', (err: string) => {
+          err && console.error(err);
+          resolve();
+        });
+      } catch (ex) {
+        console.error("Could not kill Yuzu", ex);
+        resolve();
+      }
+    });
   }
 }
 

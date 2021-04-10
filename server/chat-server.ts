@@ -3,8 +3,10 @@ import { BetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
 import { IUserModel, UserModel } from "./models/User";
 import { OverlayServer } from "./overlay-server";
+import { FAKE_TOURNAMENT_ID, getNextSingleMatch, getUpcomingSingleMatch } from "./singlematches-commands";
 import {
   getNextTournament,
+  getNextTournamentMatch,
   getUpcomingTournamentMatch,
 } from "./tournament-commands";
 
@@ -91,10 +93,17 @@ const createCommands = ({
   url: async () => {
     const tournament = await getNextTournament();
 
-    client.say(
-      channel,
-      `The tournament is here: challonge.com/${tournament.url}`
-    );
+    if (tournament) {
+      client.say(
+        channel,
+        `The tournament is here: challonge.com/${tournament.url}`
+      );
+    } else {
+      client.say(
+        channel,
+        `The stream is running in single matches mode. Enter more characters to create a tournament!`
+      );
+    }
   },
   points: async ({ userName, userId }, ...args) => {
     const user = await findRegisteredUser(
@@ -144,20 +153,40 @@ const createCommands = ({
       return;
     }
 
-    // PREVENT FROM ENTERING MULTIPLE BETS HEEEEEEEEEEEEEEREEEEEEEEEEEEEE
-
     console.log("Trying to set bet");
 
-    const tournament = await getNextTournament();
-    const match = await getUpcomingTournamentMatch(tournament.id);
+    let tournament = await getNextTournament();
+    let match;
+    if (tournament) {
+      match = await getUpcomingTournamentMatch(tournament.id);
+    } else {
+      tournament = {
+        id: FAKE_TOURNAMENT_ID,
+        url: 'none',
+        isPending: false,
+      };
+      match = await getUpcomingSingleMatch();
+    }
 
-    const existingBet = await BetModel.find({
+    if (!match) {
+      client.say(channel, `There are no matches to bet on, wait a bit for the next tournament!`);
+      return;
+    }
+
+    const existingBet = await BetModel.findOne({
       matchId: match.matchId,
       tournamentId: tournament.id,
       userId: userId,
-    })
+    });
     if (existingBet) {
-      client.say(channel, `${userName} has already entered a bet for this match. This is a no-no!`);
+      client.say(
+        channel,
+        `${userName} has already entered a bet for this match (${
+          existingBet.bet
+        } on "${
+          existingBet.player === 1 ? match.first.name : match.second.name
+        }"). This is a no-no!`
+      );
       return;
     }
 
@@ -173,7 +202,75 @@ const createCommands = ({
     await betEntry.save();
     await user.save();
 
-    client.say(channel, `${userName} bet ${bet} points on player ${playerNum}`);
+    client.say(
+      channel,
+      `${userName} bet ${bet} points on "${
+        playerNum === "1" ? match.first.name : match.second.name
+      }" and now has ${user.points} points.`
+    );
+  },
+  currentbet: async ({ userName, userId }) => {
+    let tournament = await getNextTournament();
+    let match;
+    if (tournament) {
+      match = await getNextTournamentMatch(tournament.id);
+    } else {
+      tournament = {
+        id: FAKE_TOURNAMENT_ID,
+        url: 'none',
+        isPending: false,
+      };
+      match = await getNextSingleMatch();
+    }
+    
+    const existingBet = await BetModel.findOne({
+      matchId: match.matchId,
+      tournamentId: tournament.id,
+      userId: userId,
+    });
+    if (existingBet) {
+      client.say(
+        channel,
+        `${userName} has a ${existingBet.bet} points bet on "${
+          existingBet.player === 1 ? match.first.name : match.second.name
+        }" for the current match.`
+      );
+      return;
+    } else {
+      client.say(channel, `${userName} has no bet for the match.`);
+      return;
+    }
+  },
+  upcomingbet: async ({ userName, userId }) => {
+    let tournament = await getNextTournament();
+    let match;
+    if (tournament) {
+      match = await getUpcomingTournamentMatch(tournament.id);;
+    } else {
+      tournament = {
+        id: FAKE_TOURNAMENT_ID,
+        url: 'none',
+        isPending: false,
+      };
+      match = await getUpcomingSingleMatch();
+    }
+    const existingBet = await BetModel.findOne({
+      matchId: match.matchId,
+      tournamentId: tournament.id,
+      userId: userId,
+    });
+    if (existingBet) {
+      client.say(
+        channel,
+        `${userName} has a ${existingBet.bet} points bet on "${
+          existingBet.player === 1 ? match.first.name : match.second.name
+        }" for the next match.`
+      );
+      return;
+    } else {
+      client.say(channel, `${userName} has no bet for the upcoming match.`);
+      return;
+    }
   },
   start: async ({ userName, userId }) => {
     const user = await UserModel.findOne({
@@ -204,11 +301,6 @@ const createCommands = ({
       );
       return;
     }
-    /*
-    if (!bet) {
-      client.say(channel, `${userName} didn't enter a bet. Ex: !at enter Mario.`);
-      return;
-    }*/
 
     if (name) {
       if (name.length > MAX_NAME_LENGTH) {
@@ -231,66 +323,21 @@ const createCommands = ({
       );
       return;
     }
-    /*
-    let parsedBet;
-    try {
-      parsedBet = Number.parseInt(bet);
-    } catch {
-      parsedBet = NaN;
-    }
-
-    if (parsedBet == NaN) {
-      client.say(channel, `${userName} bet an invalid number ${bet}.`);
-      return;
-    }
-
-    if (parsedBet <= 0) {
-      client.say(channel, `${userName} bet an invalid number ${bet}.`);
-      return;
-    }*/
 
     const user = await UserModel.findOne({
       twitchId: userId,
     });
 
     if (user) {
-      /*
-      if (user.points === 0) {
-        client.say(channel, `${userName} sadly doesn't have anything left.`);
-        return;
-      }
-
-      if (user.points < parsedBet) {
-        client.say(
-          channel,
-          `${userName} can only bet ${pointsString(user.points)}`
-        );
-        return;
-      }*/
-
       const newEntry = new EntryModel();
       newEntry.userId = userId;
-      newEntry.bet = 0;
       newEntry.name = name || `${userName}'s ${foundCharacter}`;
       newEntry.character = foundCharacter;
-
-      // user.points = user.points - parsedBet;
 
       await newEntry.save();
       await user.save();
 
       client.say(channel, `${userName} entered ${foundCharacter}.`);
-      /*
-      client.say(
-        channel,
-        `${userName} entered ${foundCharacter} with ${pointsString(
-          parsedBet
-        )}. You ${
-          user.points > 0
-            ? `have ${pointsString(user.points)}`
-            : `sadly have no points left`
-        }.`
-      );*/
     } else {
       client.say(
         channel,

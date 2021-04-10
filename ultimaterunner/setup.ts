@@ -55,8 +55,6 @@ export const setup = async () => {
         `Do you want to update all the menu references? Ensure that your game is freshly booted.`
       )
     ) {
-      ult.startTheGame();
-
       const referencesToGet: [AppState, string, OnReferenceFinish][] = [
         [mainMenu, 'Press enter when you are on the main menu', () => ult.getToRuleSetFromStart()],
         [ruleset, 'Press enter when you are in the rule sets', () => ult.selectDefaultRuleset()],

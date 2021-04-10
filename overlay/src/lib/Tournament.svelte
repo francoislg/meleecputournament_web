@@ -3,13 +3,21 @@
 	import MeleeText from './MeleeText.svelte';
 </script>
 
-{#if $matches.tournamentUrl}
+{#if $matches}
+    {#if $matches.tournamentUrl}
+        <div class="tournament">
+            <span>
+                <MeleeText text="Tournament: " />
+                challonge.com/{$matches.tournamentUrl}
+            </span>
+        </div>
+    {:else}
     <div class="tournament">
         <span>
-            <MeleeText text="Tournament: " />
-            challonge.com/{$matches.tournamentUrl}
+            Running in single matches mode until more entries are added.
         </span>
     </div>
+    {/if}
 {/if}
 
 <style>

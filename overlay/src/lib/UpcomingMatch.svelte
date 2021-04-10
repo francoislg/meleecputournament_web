@@ -7,7 +7,7 @@
 	{#if $matches.upcoming}
 		<div class="match">
 			<h3>
-				<MeleeText text="Upcoming" />
+				<MeleeText text="Open for bets" />
 			</h3>
 
 			(#1) {$matches.upcoming.match.first.name} - {$matches.upcoming.bets.player1} points

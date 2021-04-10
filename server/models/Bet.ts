@@ -5,7 +5,7 @@ const bet = new Schema(
     userId: String,
     bet: Number,
     player: Number,
-    tournamentId: String,
+    tournamentId: String!,
     matchId: Number,
   },
   {

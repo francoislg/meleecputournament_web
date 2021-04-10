@@ -12,6 +12,14 @@ import {
   PlayerMessageMeta,
   MatchMessage,
 } from "./tournament-commands";
+import {
+  hasEnoughEntriesForTournament,
+  getNextSingleMatch,
+  createSingleMatch,
+  hasSingleMatchInProgress,
+  officiallyStartSingleMatch,
+  finishSingleMatch,
+} from "./singlematches-commands";
 
 export interface MatchResponseMessage {
   winner: PlayerMessageMeta;
@@ -25,7 +33,10 @@ let lastMatch: MatchMessage | null = null;
 export class PCServer {
   constructor(private overlay: OverlayServer) {}
 
-  public async connect(socket: Socket, { reconnecting }: { reconnecting: boolean }) {
+  public async connect(
+    socket: Socket,
+    { reconnecting }: { reconnecting: boolean }
+  ) {
     const fillAndStartTournament = async (tournamentId: string) => {
       console.log("Creating and starting a new tournament");
       await addParticipants(tournamentId);
@@ -41,40 +52,71 @@ export class PCServer {
         const tournament = await getNextTournament();
 
         if (tournament) {
-          if (tournament.state === "pending") {
+          if (tournament.isPending) {
             await fillAndStartTournament(tournament.id);
           } else {
             const match = await getNextTournamentMatch(tournament.id);
             if (match) {
-              await officiallyStartMatch(tournament.id, match.matchId);
               socket.emit("match", match);
               lastMatch = match;
               this.overlay.updateMatchesData();
               console.log("Match properly sent");
             } else {
               await finishTournament(tournament.id);
-              const newTournamentId = await createNewTournament();
-              await fillAndStartTournament(newTournamentId);
+              await sendNextMatch();
             }
           }
-        } else {
+        } else if (await hasEnoughEntriesForTournament()) {
           const newTournamentId = await createNewTournament();
           await fillAndStartTournament(newTournamentId);
+        } else {
+          // Single match mode
+          let match = await getNextSingleMatch();
+          if (!match) {
+            match = await createSingleMatch();
+          }
+          if (match) {
+            socket.emit("match", match);
+            lastMatch = match;
+            this.overlay.updateMatchesData();
+            console.log("Single match properly sent");
+          }
         }
       } catch (err) {
-        console.error("Error in sendNextMatch handle, trying again in 5 seconds", err);
+        console.error(
+          "Error in sendNextMatch handle, trying again in 5 seconds",
+          err
+        );
         setTimeout(sendNextMatch, 5000);
       }
     };
 
     const sendStartNextMatch = async () => {
-      console.log("Sending to start the match")
+      console.log("Sending to start the match");
       socket.emit("startmatch");
       this.overlay.startMatch();
-    }
+
+      if (!lastMatch) {
+        console.error(
+          "Somehow there were no last match stored, so we could not send the start signal."
+        );
+        return;
+      }
+
+      if (await hasSingleMatchInProgress()) {
+        await officiallyStartSingleMatch(lastMatch.matchId);
+      } else {
+        try {
+          const tournament = await getNextTournament();
+          await officiallyStartMatch(tournament.id, lastMatch.matchId);
+        } catch {
+          console.error("COULD NOT SET AS STARTED IN CHALLONGE");
+        }
+      }
+    };
 
     socket.on("reemitlast", async () => {
-      console.log("Received a reemit")
+      console.log("Received a reemit");
       if (lastMatch) {
         socket.emit("match", lastMatch);
         await sendStartNextMatch();
@@ -90,34 +132,45 @@ export class PCServer {
         console.log("Received a win!");
         let registeredWin = false;
         const registerWin = async () => {
-          try {
-            const tournament = await getNextTournament();
-            await finishMatch(tournament.id, matchId, {
+          if (await hasSingleMatchInProgress()) {
+            await finishSingleMatch(matchId, {
               winnerId: winner.id,
               winnerName: winner.name,
               isWinnerFirstPlayer,
             });
             return true;
-          } catch (err) {
-            console.error("Error while registering win, will retry", err);
-            return false;
+          } else {
+            try {
+              const tournament = await getNextTournament();
+              await finishMatch(tournament.id, matchId, {
+                winnerId: winner.id,
+                winnerName: winner.name,
+                isWinnerFirstPlayer,
+              });
+              return true;
+            } catch (err) {
+              console.error("Error while registering win, will retry", err);
+              return false;
+            }
           }
-        }
+        };
         try {
           registeredWin = await registerWin();
           while (!registeredWin) {
             await waitFor(5000);
             registeredWin = await registerWin();
           }
-          
-          lastMatch = null
+
+          lastMatch = null;
 
           this.overlay.sendWinner({ isWinnerFirstPlayer });
 
           const NEXT_MATCH_IN_SECONDS = 30;
           this.overlay.nextMatchIn(NEXT_MATCH_IN_SECONDS);
 
-          console.log(`Properly finished, match starting in ${NEXT_MATCH_IN_SECONDS} seconds`)
+          console.log(
+            `Properly finished, match starting in ${NEXT_MATCH_IN_SECONDS} seconds`
+          );
 
           await sendNextMatch();
 
@@ -140,4 +193,5 @@ export class PCServer {
   }
 }
 
-const waitFor = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const waitFor = async (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

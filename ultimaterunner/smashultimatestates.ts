@@ -82,8 +82,8 @@ export const isMatchInProgress: AppState = {
   description: 'Whether the match is still in progress, which the countdown',
   referenceFile: REFERENCES_FOLDER + '/matchinprogress.png',
   region: {
-    x: 1712,
-    y: 72,
+    x: 1715,
+    y: 73,
     w: 8,
     h: 8,
   },

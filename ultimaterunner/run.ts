@@ -62,14 +62,20 @@ export const runWithServer = async () => {
 
     await yuzu.boot();
     console.log("Booted!");
-    setInterval(() => yuzu.tick(), 5000);
+    await yuzu.tick();
 
     let nbInProgressInARow = 0;
     let nbReadyInARow = 0;
     while (1) {
+
       const app = new SmashApp(ult);
 
       const { readyForMatch, playerWon, matchInProgress, nextDelay } = await app.tick();
+
+      // Do not test for Yuzu if the match is ready to start somehow
+      if (!readyForMatch) {
+        await yuzu.tick();
+      }
 
       if (readyForMatch) {
         if (++nbReadyInARow > 10) {
@@ -77,7 +83,7 @@ export const runWithServer = async () => {
           // Just in case
           askForReemit();
         }
-        if (currentMatch) {
+        if (!!currentMatch) {
           if (!charactersSelected) {
             charactersSelected = true;
             await ult.justSelectCharacters(currentMatch.first.character,

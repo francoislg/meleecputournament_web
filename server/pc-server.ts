@@ -94,7 +94,6 @@ export class PCServer {
     const sendStartNextMatch = async () => {
       console.log("Sending to start the match");
       socket.emit("startmatch");
-      this.overlay.startMatch();
 
       if (!lastMatch) {
         console.error(
@@ -113,6 +112,9 @@ export class PCServer {
           console.error("COULD NOT SET AS STARTED IN CHALLONGE");
         }
       }
+
+      this.overlay.startMatch();
+      this.overlay.updateMatchesData();
     };
 
     socket.on("reemitlast", async () => {

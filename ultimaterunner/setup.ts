@@ -1,6 +1,5 @@
-import { writeFile } from 'fs/promises';
 import readline from 'readline';
-import { readWindow, REFERENCES_FOLDER, WINDOW_CONFIG_FILE, WINDOW_SIZE } from './constants';
+import { readWindow, REFERENCES_FOLDER, WINDOW_SIZE } from './constants';
 import { getScreenSize, captureImage, Region, regionOffset } from './screencapture';
 import { randomCharacter, withController } from './smashultimatecontroller';
 import {
@@ -18,7 +17,7 @@ import {
 import { AppState, stateMatcher } from './states';
 import {YuzuCheck} from "./yuzu";
 
-const FULL_SCREEN_FILE = `${REFERENCES_FOLDER}/fullscreen.png`;
+//const FULL_SCREEN_FILE = `${REFERENCES_FOLDER}/fullscreen.png`;
 const WINDOW_FILE = `${REFERENCES_FOLDER}/window.png`;
 
 export const setup = async () => {
@@ -36,17 +35,18 @@ export const setup = async () => {
       await image.save(fileName);
     };
 
-    let valid = false;
-    let windowOffset = { x: 0, y: 0 };
+    const windowOffset = await readWindow();
     const windowUpdate = async () =>
       await captureAndSave({ x: windowOffset.x, y: windowOffset.y, ...WINDOW_SIZE }, WINDOW_FILE);
+    await windowUpdate();
+      /*
     do {
       await captureAndSave({ x: 0, y: 0, w: screen.width, h: screen.height }, FULL_SCREEN_FILE);
 
       windowOffset = await screenSetup();
       await windowUpdate();
       valid = await yesnoQuestion(`Please validate ${WINDOW_FILE}, does it seem correct?`);
-    } while (!valid);
+    } while (!valid);*/
 
     type OnReferenceFinish = () => Promise<void>;
 
@@ -184,7 +184,7 @@ export const setup = async () => {
     }
   });
 };
-
+/*
 const screenSetup = async (): Promise<{ x: number; y: number }> => {
   let previous;
   try {
@@ -216,7 +216,7 @@ const screenSetup = async (): Promise<{ x: number; y: number }> => {
   } else {
     return readWindow();
   }
-};
+};*/
 
 const yesnoQuestion = async (q: string) => {
   const answer = ((await question(`${q} (Y/n).`)) || 'y').toLowerCase();

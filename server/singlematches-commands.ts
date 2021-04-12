@@ -109,9 +109,11 @@ export const getUpcomingSingleMatch = async (): Promise<MatchMessage | null> => 
 
   const match = await SingleMatchModel.findOne({
     started: false,
+    winner: 0,
   });
 
   if (match) {
+    console.log("Found existing upcoming match");
     return findCompleteMatchMetaFromMatch(match);
   }
 

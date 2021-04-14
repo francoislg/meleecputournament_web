@@ -3,7 +3,11 @@ import { BetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
 import { IUserModel, UserModel } from "./models/User";
 import { OverlayServer } from "./overlay-server";
-import { FAKE_TOURNAMENT_ID, getNextSingleMatch, getUpcomingSingleMatch } from "./singlematches-commands";
+import {
+  FAKE_TOURNAMENT_ID,
+  getNextSingleMatch,
+  getUpcomingSingleMatch,
+} from "./singlematches-commands";
 import {
   getNextTournament,
   getNextTournamentMatch,
@@ -16,6 +20,21 @@ const tmi = require("tmi.js");
 const BOT_USERNAME = "autotournaments";
 const CHANNEL_NAME = "autotournaments";
 const OAUTH_TOKEN = process.env.AT_TWITCH_OAUTH_TOKEN;
+
+const JOIN_MESSAGE_ENABLED = true;
+const JOIN_TIME_BUFFER_SEC = 20;
+const JOIN_BLACKLIST = [
+  "abbottcostello", // Not sure
+  "bingcortana",
+  "electricallongboard", // Not sure
+  "ftopayr",
+  "havethis2",
+  "icewizerds",
+  "jointeffortt", // Not sure
+  "casinothanks",
+  "streamers_area",
+  "gowithhim",
+];
 
 if (!OAUTH_TOKEN) {
   throw new Error("Twitch token not provided.");
@@ -162,14 +181,17 @@ const createCommands = ({
     } else {
       tournament = {
         id: FAKE_TOURNAMENT_ID,
-        url: 'none',
+        url: "none",
         isPending: false,
       };
       match = await getUpcomingSingleMatch();
     }
 
     if (!match) {
-      client.say(channel, `There are no matches to bet on, wait a bit for the next tournament!`);
+      client.say(
+        channel,
+        `There are no matches to bet on, wait a bit for the next tournament!`
+      );
       return;
     }
 
@@ -217,12 +239,12 @@ const createCommands = ({
     } else {
       tournament = {
         id: FAKE_TOURNAMENT_ID,
-        url: 'none',
+        url: "none",
         isPending: false,
       };
       match = await getNextSingleMatch();
     }
-    
+
     const existingBet = await BetModel.findOne({
       matchId: match.matchId,
       tournamentId: tournament.id,
@@ -245,11 +267,11 @@ const createCommands = ({
     let tournament = await getNextTournament();
     let match;
     if (tournament) {
-      match = await getUpcomingTournamentMatch(tournament.id);;
+      match = await getUpcomingTournamentMatch(tournament.id);
     } else {
       tournament = {
         id: FAKE_TOURNAMENT_ID,
-        url: 'none',
+        url: "none",
         isPending: false,
       };
       match = await getUpcomingSingleMatch();
@@ -289,7 +311,7 @@ const createCommands = ({
 
       client.say(
         channel,
-        `${userName} was given ${POINTS_TO_START_WITH} points to start.`
+        `${userName} was given ${POINTS_TO_START_WITH} points to start.\nYou can now enter a character with \`!at enter [character] [name]\`, such as \`!at enter Kirby FluffBall\``
       );
     }
   },
@@ -349,6 +371,7 @@ const createCommands = ({
 });
 
 export class ChatServer {
+  client: any;
   constructor(overlay: OverlayServer) {
     const channel = CHANNEL_NAME;
     const client = new tmi.client({
@@ -361,12 +384,76 @@ export class ChatServer {
       },
       channels: [channel],
     });
+    this.client = client;
 
     const commands = createCommands({
       client,
       channel,
       overlay,
     });
+
+    if (JOIN_MESSAGE_ENABLED) {
+      let peopleToGreet: string[] = [];
+      let isFirstJoinSkipped = false;
+      let timeout;
+
+      client.on("part", async (channel, userName, self, ...args) => {
+        peopleToGreet = peopleToGreet.filter((p) => p !== userName);
+        console.log("Filtered out", userName, peopleToGreet);
+      });
+
+      client.on("join", async (channel, userName, self, ...args) => {
+        console.log(`${userName} joined. ${self} ${args}`);
+        if (self) {
+          return;
+        }
+
+        if (JOIN_BLACKLIST.indexOf(userName) !== -1) {
+          return;
+        }
+
+        peopleToGreet.push(userName);
+
+        clearTimeout(timeout);
+        timeout = setTimeout(async () => {
+          if (isFirstJoinSkipped) {
+            console.log("To greet", peopleToGreet);
+            const users = await UserModel.find({
+              twitchUsername: {
+                $in: peopleToGreet,
+              },
+            });
+
+            let returning = peopleToGreet
+              .map((p) => users.find((user) => user.twitchUsername === p))
+              .filter((p) => !!p);
+            let newUsers = peopleToGreet.filter(
+              (p) => !users.find((user) => user.twitchUsername === p)
+            );
+            console.log("Greeting", returning, newUsers);
+
+            const messages = [
+              returning.length > 0 &&
+                `Welcome back to: ${returning
+                  .map((r) => `${r.twitchUsername} (${r.points} points)`)
+                  .join(", ")}!`,
+              newUsers.length > 0 &&
+                `Welcome to our unregistered users: ${newUsers.join(
+                  ", "
+                )}! Enter \`!at start\` to register!`,
+            ].filter((m) => !!m);
+
+            if (messages.length > 0) {
+              client.say(channel, messages.join("\n"));
+            }
+          } else {
+            console.log("Skipping the greet", peopleToGreet);
+            isFirstJoinSkipped = true;
+          }
+          peopleToGreet = [];
+        }, JOIN_TIME_BUFFER_SEC * 1000);
+      });
+    }
 
     client.on("message", (target, context, msg, self) => {
       if (self) {
@@ -415,5 +502,9 @@ export class ChatServer {
     });
 
     client.connect();
+  }
+
+  async sendMessage(message: string) {
+    this.client.say(CHANNEL_NAME, message);
   }
 }

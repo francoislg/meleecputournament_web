@@ -25,6 +25,12 @@ export const hasSingleMatchInProgress = async () => {
   return match !== null;
 };
 
+type Award = {
+  points: number;
+  userId: string;
+  userName: string;
+};
+
 export const finishSingleMatch = async (
   matchId: number,
   {
@@ -38,8 +44,14 @@ export const finishSingleMatch = async (
     tournamentId: FAKE_TOURNAMENT_ID,
     name: winnerName,
   });
+
+  let awards: Award[] = [];
+
   if (entry?.userId) {
-    await givePointsToUser(entry.userId, 5);
+    const award = await givePointsToUser(entry.userId, 5);
+    if (award) {
+      awards.push(award);
+    }
   }
   const bets = await BetModel.find({
     matchId,
@@ -49,10 +61,13 @@ export const finishSingleMatch = async (
 
   console.log("found bets", bets);
 
-  await Promise.all(
-    bets.map(async ({ userId, bet }) => {
-      await givePointsToUser(userId, bet * 2);
-    })
+  const wins = await Promise.all(
+    bets.map(async ({ userId, bet }) => givePointsToUser(userId, bet * 2))
+  );
+  awards.push(
+    ...(
+      wins.filter((a) => a !== null) as Award[]
+    )
   );
 
   await SingleMatchModel.findOneAndUpdate(
@@ -63,6 +78,8 @@ export const finishSingleMatch = async (
       winner: isWinnerFirstPlayer ? 1 : 2,
     }
   );
+
+  return awards;
 };
 
 const findCompleteMatchMetaFromMatch = async (
@@ -92,7 +109,7 @@ const findCompleteMatchMetaFromMatch = async (
 
 export const getNextSingleMatch = async (): Promise<MatchMessage | null> => {
   console.log("Getting the next single match");
-  
+
   const match = await SingleMatchModel.findOne({
     winner: 0,
   });
@@ -121,7 +138,8 @@ export const getUpcomingSingleMatch = async (): Promise<MatchMessage | null> => 
     tournamentId: null,
   }).limit(2);
 
-  const { id = 0, character = "???", name = "The next entry or a dummy" } = entries[0] || {};
+  const { id = 0, character = "???", name = "The next entry or a dummy" } =
+    entries[0] || {};
   const {
     id: secondId = 0,
     character: secondCharacter = "???",
@@ -210,8 +228,11 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
     },
   };
 };
-export const givePointsToUser = async (twitchId: string, points: number) => {
-  await UserModel.updateOne(
+export const givePointsToUser = async (
+  twitchId: string,
+  points: number
+): Promise<Award | null> => {
+  const user = await UserModel.findOneAndUpdate(
     {
       twitchId,
     },
@@ -221,5 +242,15 @@ export const givePointsToUser = async (twitchId: string, points: number) => {
       },
     }
   );
-  console.log(`Gave ${points} to ${twitchId}`);
+
+  if (!user) {
+    console.log(`Could not find ${twitchId} ?!?`);
+    return null;
+  }
+
+  return {
+    userId: twitchId,
+    userName: user.twitchUsername,
+    points,
+  };
 };

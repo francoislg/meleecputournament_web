@@ -12,7 +12,7 @@ import { readWindow, WINDOW_CONFIG_FILE } from './constants';
 const YUZU_PATH = 'C:\\Users\\Fanfo\\AppData\\Local\\yuzu\\yuzu-windows-msvc\\yuzu.exe';
 const SMASH_PATH = 'D:\\Yuzu\\Super Smash Bros Ultimate [01006A800016E000][v0].nsp';
 
-const NB_FRAME_FREEZE_DETECTION = 10;
+const NB_FRAME_FREEZE_DETECTION = 5;
 
 export class YuzuCheck {
   private ticks: number = 0;
@@ -32,17 +32,19 @@ export class YuzuCheck {
     await this.startYuzuIfNotStarted();
     await this.setYuzuWindowBounds();
 
-    if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
-      this.previousImages.shift();
-    }
-    this.previousImages.push(await capture());
-
-    if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
-      const firstImage = this.previousImages[0];
-      const areAllSimilar = this.previousImages.every((im) => im.isMatching(firstImage));
-      if (areAllSimilar) {
-        console.log('FREEZE DETECTED, RESTARTING');
-        await this.restartYuzu();
+    if (this.ticks % 3 === 1) {
+      if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
+        this.previousImages.shift();
+      }
+      this.previousImages.push(await capture());
+  
+      if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
+        const firstImage = this.previousImages[0];
+        const areAllSimilar = this.previousImages.every((im) => im.isMatching(firstImage));
+        if (areAllSimilar) {
+          console.log('FREEZE DETECTED, RESTARTING');
+          await this.restartYuzu();
+        }
       }
     }
   }

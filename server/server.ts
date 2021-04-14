@@ -11,8 +11,8 @@ const SECRET_OVERLAY_KEY = "yrxbJYtE4KbYX6Ci2RQGpSKBur7Ubh";
 
 connectToMongo().then(() => {
   const overlayServer = new OverlayServer();
-  new ChatServer(overlayServer);
-  const pcServer = new PCServer(overlayServer);
+  const chat = new ChatServer(overlayServer);
+  const pcServer = new PCServer(overlayServer, chat);
 
   const server = new Server(8080, {
     cors: {

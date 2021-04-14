@@ -163,7 +163,22 @@ export class SmashUltimateControllers {
   }
 
   async moveJustABitToRegisterAsPlayersInCSS() {
-    await Promise.all([this.player1.press(Inputs.B).execute(), this.player2.press(Inputs.B).execute()]);
+    await Promise.all([
+      this.player1
+        .hold(Inputs.DOWN)
+        .forMilliseconds(300)
+        .andThen()
+        .hold(Inputs.UP)
+        .forMilliseconds(300)
+        .execute(),
+      this.player2
+        .hold(Inputs.DOWN)
+        .forMilliseconds(300)
+        .andThen()
+        .hold(Inputs.UP)
+        .forMilliseconds(300)
+        .execute(),
+    ]);
   }
 
   async resetControllersPosition() {
@@ -214,7 +229,6 @@ export class SmashUltimateControllers {
     await this.player1.press(Inputs.A).execute();
     await waitFor(2000);
     await this.player1.press(Inputs.A).execute();
-    await waitFor(8000);
   }
 }
 

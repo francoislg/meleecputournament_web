@@ -76,10 +76,8 @@ export class SmashApp {
           return {};
         }
       case SmashState.MATCH_FINISHED:
-        await waitFor(1000);
         await this.ult.pressAOnTheWinScreen();
-        await waitFor(1000);
-        return { nextDelay: 200 };
+        return { nextDelay: 1000 };
       case SmashState.MATCH_FINISHED_CHECKING_WINNERS:
         let playerWon = await this.checkForWinner();
 
@@ -87,10 +85,11 @@ export class SmashApp {
           await this.ult.finishTheMatch();
 
           return {
+            nextDelay: 8000,
             playerWon,
           };
         } else {
-          return { nextDelay: 200 };
+          return { nextDelay: 500 };
         }
       case SmashState.MATCH_IN_PROGRESS:
         return { nextDelay: 5000, matchInProgress: true };
@@ -107,11 +106,17 @@ export class SmashApp {
     const MAX_TRIES = 5;
     let tries = 0;
 
-    await this.ult.moveJustABitToRegisterAsPlayersInCSS();
-
     await capture();
     let isP1Cpu = await matchEither(isPlayerOneACPU);
     let isP2Cpu = await matchEither(isPlayerTwoACPU);
+
+    if (!isP1Cpu || !isP2Cpu) {
+      await this.ult.moveJustABitToRegisterAsPlayersInCSS();
+    }
+
+    await capture();
+    isP1Cpu = await matchEither(isPlayerOneACPU);
+    isP2Cpu = await matchEither(isPlayerTwoACPU);
 
     while (tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)) {
       await Promise.all([

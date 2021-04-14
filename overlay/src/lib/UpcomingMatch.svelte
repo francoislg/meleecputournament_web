@@ -1,10 +1,18 @@
 <script lang="ts">
-	import { matches } from './_serverstore';
+	import { matches, nextMatchInSeconds } from './_serverstore';
 	import MeleeText from './MeleeText.svelte';
 </script>
 
 <div class="matches">
-	{#if $matches.upcoming}
+	{#if $nextMatchInSeconds}
+		<h2>
+			<MeleeText
+				text={$nextMatchInSeconds <= 0
+					? `Bets closing`
+					: `Bets closing in ${$nextMatchInSeconds} seconds`}
+			/>
+		</h2>
+	{:else if $matches.upcoming}
 		<div class="match">
 			<h3>
 				<MeleeText text="Open for bets" />

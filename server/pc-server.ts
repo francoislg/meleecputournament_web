@@ -1,5 +1,6 @@
 import type { Socket } from "socket.io";
 import { OverlayServer } from "./overlay-server";
+import { ChatServer } from "./chat-server";
 import {
   addParticipants,
   startTournament,
@@ -31,7 +32,7 @@ export interface MatchResponseMessage {
 let lastMatch: MatchMessage | null = null;
 
 export class PCServer {
-  constructor(private overlay: OverlayServer) {}
+  constructor(private overlay: OverlayServer, private chat: ChatServer) {}
 
   public async connect(
     socket: Socket,
@@ -135,11 +136,14 @@ export class PCServer {
         let registeredWin = false;
         const registerWin = async () => {
           if (await hasSingleMatchInProgress()) {
-            await finishSingleMatch(matchId, {
+            const wins = await finishSingleMatch(matchId, {
               winnerId: winner.id,
               winnerName: winner.name,
               isWinnerFirstPlayer,
             });
+            if (wins.length > 0) {
+              this.chat.sendMessage(`Wins for this match: ${wins.map(({userName, points}) => `${userName} +${points}`).join(", ")}`)
+            }
             return true;
           } else {
             try {

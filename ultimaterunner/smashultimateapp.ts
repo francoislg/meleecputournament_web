@@ -1,3 +1,4 @@
+import { REFERENCES_FOLDER } from './constants';
 import { SmashUltimateControllers } from './smashultimatecontroller';
 import {
   mainMenu,
@@ -9,6 +10,7 @@ import {
   didPlayer1Win,
   didPlayer2Win,
   isMatchInProgress,
+  isPlayerTwoACPU,
 } from './smashultimatestates';
 import { stateMatcher } from './states';
 
@@ -34,11 +36,9 @@ export class SmashApp {
   constructor(private ult: SmashUltimateControllers) {}
 
   async tick(): Promise<ITickResponse> {
-    const { match, capture } = this.stateMatcher;
-
     const state = await this.getNextState();
 
-    console.log("State:", state);
+    console.log('State:', state);
 
     switch (state) {
       case SmashState.MAIN_MENU:
@@ -48,21 +48,14 @@ export class SmashApp {
       case SmashState.STAGE_SELECTION:
         await this.ult.selectStage();
       case SmashState.CSS:
-        await capture();
-
-        if (!(await match(isPlayerOneACPU))) {
-          await this.ult.setAsCPU();
-
-          // Failsafe in case the CPU thing didn't work
-          await capture();
-          if (!(await match(isPlayerOneACPU))) {
-            console.log('Player 1 is still not a cpu somehow');
-            return {};
-          }
+        if (await this.trySetAsCPUACoupleOfTimes()) {
+          return {
+            readyForMatch: true,
+          };
+        } else {
+          // Failed!
+          return {};
         }
-        return {
-          readyForMatch: true,
-        };
       case SmashState.MATCH_FINISHED:
         await waitFor(1000);
         await this.ult.pressAOnTheWinScreen();
@@ -87,7 +80,51 @@ export class SmashApp {
     return {};
   }
 
-  // Might want to split those two methods into "Screens".
+  private async trySetAsCPUACoupleOfTimes(): Promise<boolean> {
+    const { capture, match } = this.stateMatcher;
+
+    const matchEither: typeof match = async (state) =>
+      (await match({
+        ...state,
+        referenceFile: state.referenceFile.replace(
+          REFERENCES_FOLDER,
+          REFERENCES_FOLDER + ' fullscreen'
+        ),
+      })) ||
+      (await match({
+        ...state,
+        referenceFile: state.referenceFile.replace(
+          REFERENCES_FOLDER,
+          REFERENCES_FOLDER + ' blackbars'
+        ),
+      }));
+    const MAX_TRIES = 5;
+    let tries = 0;
+
+    await this.ult.moveJustABitToRegisterAsPlayersInCSS();
+
+    await capture();
+    let isP1Cpu = await matchEither(isPlayerOneACPU);
+    let isP2Cpu = await matchEither(isPlayerTwoACPU);
+
+    while (tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)) {
+      await Promise.all([
+        isP1Cpu ? Promise.resolve() : this.ult.setP1AsCPU(),
+        isP2Cpu ? Promise.resolve() : this.ult.setP2AsCPU(),
+      ]);
+
+      await capture();
+
+      isP1Cpu = await matchEither(isPlayerOneACPU);
+      isP2Cpu = await matchEither(isPlayerTwoACPU);
+      tries++;
+
+      console.log(`p1: ${isP1Cpu}, p2: ${isP2Cpu}, tries: ${tries}, ${tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)}`)
+    };
+
+    return isP1Cpu && isP2Cpu;
+  }
+
   private async getNextState() {
     let previousState = await this.detectFullState();
     await waitFor(500);
@@ -102,9 +139,53 @@ export class SmashApp {
   }
 
   private async detectFullState(): Promise<SmashState> {
-    const { capture, match } = this.stateMatcher;
+    const { capture, match: originalMatch } = this.stateMatcher;
+
+    const match: typeof originalMatch = (state) =>
+      originalMatch({
+        ...state,
+        referenceFile: state.referenceFile.replace(
+          REFERENCES_FOLDER,
+          REFERENCES_FOLDER + ' fullscreen'
+        ),
+      });
 
     await capture();
+
+    // Ensure that we support both black bars and not for Yuzu
+    const withBlackBar = await this.matchBlackBarFullState();
+    if (withBlackBar !== SmashState.MATCH_IN_PROGRESS) {
+      return withBlackBar;
+    }
+
+    if (await match(mainMenu)) {
+      return SmashState.MAIN_MENU;
+    } else if (await match(ruleset)) {
+      return SmashState.RULESET;
+    } else if (await match(stageSelection)) {
+      return SmashState.STAGE_SELECTION;
+    } else if (await match(css)) {
+      return SmashState.CSS;
+    } else if (await this.checkForWinner()) {
+      return SmashState.MATCH_FINISHED_CHECKING_WINNERS;
+    } else if (await this.checkForMatchOver()) {
+      return SmashState.MATCH_FINISHED;
+    } else {
+      return SmashState.MATCH_IN_PROGRESS;
+    }
+  }
+
+  private async matchBlackBarFullState(): Promise<SmashState> {
+    const { match: originalMatch } = this.stateMatcher;
+
+    const match: typeof originalMatch = (state) =>
+      originalMatch({
+        ...state,
+        referenceFile: state.referenceFile.replace(
+          REFERENCES_FOLDER,
+          REFERENCES_FOLDER + ' blackbars'
+        ),
+      });
 
     if (await match(mainMenu)) {
       return SmashState.MAIN_MENU;

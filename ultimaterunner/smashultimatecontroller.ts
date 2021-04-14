@@ -75,8 +75,8 @@ class CharacterCursor {
     }
     const rowNumber = Math.floor(index / charactersPerRow) + 1;
     const colNumber = (index % charactersPerRow) + 1;
-    const x = cssBounds.x + (colNumber * characterBox.w);
-    const y = cssBounds.y + (rowNumber * characterBox.h);
+    const x = cssBounds.x + colNumber * characterBox.w;
+    const y = cssBounds.y + rowNumber * characterBox.h;
     console.log(
       `Player ${this.player} trying to get to ${character} (${index}, ${rowNumber}, ${colNumber}) on ${x},${y}`
     );
@@ -89,7 +89,9 @@ class CharacterCursor {
       Math.abs(position - target) * (speed / 100);
 
     // Assume the cursor is always at the bottom right for now, since we don't account for the controller start up time.
-    const { bounds: { LEFT: x, BOTTOM: y }} = CONSTANTS;
+    const {
+      bounds: { LEFT: x, BOTTOM: y },
+    } = CONSTANTS;
 
     const { cssCursorSpeedPer100Ms } = CONSTANTS;
     let timeX = distanceInMs(x, targetX, cssCursorSpeedPer100Ms.x);
@@ -130,7 +132,7 @@ class CharacterCursor {
 export class SmashUltimateControllers {
   private player1CSSCursor: CharacterCursor;
   private player2CSSCursor: CharacterCursor;
-  constructor(private player1: AsyncController, player2: AsyncController) {
+  constructor(private player1: AsyncController, private player2: AsyncController) {
     this.player1CSSCursor = new CharacterCursor(player1, 1);
     this.player2CSSCursor = new CharacterCursor(player2, 2);
   }
@@ -160,8 +162,24 @@ export class SmashUltimateControllers {
     await waitFor(7000);
   }
 
+  async moveJustABitToRegisterAsPlayersInCSS() {
+    await Promise.all([this.player1.press(Inputs.B).execute(), this.player2.press(Inputs.B).execute()]);
+  }
+
   async resetControllersPosition() {
     await Promise.all([this.player1CSSCursor.calibrate(), this.player2CSSCursor.calibrate()]);
+  }
+
+  async setP1AsCPU() {
+    await this.player1CSSCursor.calibrate();
+    await this.player1CSSCursor.setAsCPU();
+    await waitFor(500);
+  }
+
+  async setP2AsCPU() {
+    await this.player2CSSCursor.calibrate();
+    await this.player2CSSCursor.setAsCPU();
+    await waitFor(500);
   }
 
   async setAsCPU() {

@@ -88,6 +88,7 @@ export const runWithServer = async () => {
             charactersSelected = true;
             await ult.justSelectCharacters(currentMatch.first.character,
               currentMatch.second.character);
+            await waitFor(500);
           }
           if (startCurrentMatch) {
             await ult.startMatch();

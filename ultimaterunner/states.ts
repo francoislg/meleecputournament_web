@@ -25,7 +25,7 @@ export const stateMatcher = () => {
       await capture();
     }
     const reference = await getReference(state.referenceFile);
-    const cropped = await image.getRegion(state.region);
+    const cropped = image.getRegion(state.region);
     return reference.isMatching(cropped);
   };
   return {

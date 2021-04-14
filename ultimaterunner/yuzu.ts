@@ -55,7 +55,7 @@ export class YuzuCheck {
       spawned.unref();
 
       console.log('Waiting 60 seconds for Yuzu to boot the game');
-      await waitFor(50000);
+      await waitFor(60000);
       console.log('Assuming game is in the cinematic, starting the game!');
       await this.ult.startTheGame();
 
@@ -78,7 +78,8 @@ export class YuzuCheck {
       const window = yuzuWindows[0];
 
       if (window) {
-        window.bringToTop();
+        // removing this because it steals focus
+        //window.bringToTop();
         const WINDOW_OFFSET_SOMEHOW = 7;
         const YUZU_HEADER = 52;
         const initial = await readWindow();

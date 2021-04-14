@@ -31,6 +31,25 @@ export interface ITickResponse {
   matchInProgress?: boolean;
 }
 
+const withMatchEither = (match: ReturnType<typeof stateMatcher>['match']) => {
+  const matcher: typeof match = async (state) =>
+    (await match({
+      ...state,
+      referenceFile: state.referenceFile.replace(
+        REFERENCES_FOLDER,
+        REFERENCES_FOLDER + ' fullscreen'
+      ),
+    })) ||
+    (await match({
+      ...state,
+      referenceFile: state.referenceFile.replace(
+        REFERENCES_FOLDER,
+        REFERENCES_FOLDER + ' blackbars'
+      ),
+    }));
+  return matcher;
+};
+
 export class SmashApp {
   private stateMatcher = stateMatcher();
   constructor(private ult: SmashUltimateControllers) {}
@@ -83,21 +102,8 @@ export class SmashApp {
   private async trySetAsCPUACoupleOfTimes(): Promise<boolean> {
     const { capture, match } = this.stateMatcher;
 
-    const matchEither: typeof match = async (state) =>
-      (await match({
-        ...state,
-        referenceFile: state.referenceFile.replace(
-          REFERENCES_FOLDER,
-          REFERENCES_FOLDER + ' fullscreen'
-        ),
-      })) ||
-      (await match({
-        ...state,
-        referenceFile: state.referenceFile.replace(
-          REFERENCES_FOLDER,
-          REFERENCES_FOLDER + ' blackbars'
-        ),
-      }));
+    const matchEither = withMatchEither(match);
+
     const MAX_TRIES = 5;
     let tries = 0;
 
@@ -119,8 +125,12 @@ export class SmashApp {
       isP2Cpu = await matchEither(isPlayerTwoACPU);
       tries++;
 
-      console.log(`p1: ${isP1Cpu}, p2: ${isP2Cpu}, tries: ${tries}, ${tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)}`)
-    };
+      console.log(
+        `p1: ${isP1Cpu}, p2: ${isP2Cpu}, tries: ${tries}, ${
+          tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)
+        }`
+      );
+    }
 
     return isP1Cpu && isP2Cpu;
   }
@@ -141,51 +151,9 @@ export class SmashApp {
   private async detectFullState(): Promise<SmashState> {
     const { capture, match: originalMatch } = this.stateMatcher;
 
-    const match: typeof originalMatch = (state) =>
-      originalMatch({
-        ...state,
-        referenceFile: state.referenceFile.replace(
-          REFERENCES_FOLDER,
-          REFERENCES_FOLDER + ' fullscreen'
-        ),
-      });
+    const match = withMatchEither(originalMatch);
 
     await capture();
-
-    // Ensure that we support both black bars and not for Yuzu
-    const withBlackBar = await this.matchBlackBarFullState();
-    if (withBlackBar !== SmashState.MATCH_IN_PROGRESS) {
-      return withBlackBar;
-    }
-
-    if (await match(mainMenu)) {
-      return SmashState.MAIN_MENU;
-    } else if (await match(ruleset)) {
-      return SmashState.RULESET;
-    } else if (await match(stageSelection)) {
-      return SmashState.STAGE_SELECTION;
-    } else if (await match(css)) {
-      return SmashState.CSS;
-    } else if (await this.checkForWinner()) {
-      return SmashState.MATCH_FINISHED_CHECKING_WINNERS;
-    } else if (await this.checkForMatchOver()) {
-      return SmashState.MATCH_FINISHED;
-    } else {
-      return SmashState.MATCH_IN_PROGRESS;
-    }
-  }
-
-  private async matchBlackBarFullState(): Promise<SmashState> {
-    const { match: originalMatch } = this.stateMatcher;
-
-    const match: typeof originalMatch = (state) =>
-      originalMatch({
-        ...state,
-        referenceFile: state.referenceFile.replace(
-          REFERENCES_FOLDER,
-          REFERENCES_FOLDER + ' blackbars'
-        ),
-      });
 
     if (await match(mainMenu)) {
       return SmashState.MAIN_MENU;
@@ -205,7 +173,8 @@ export class SmashApp {
   }
 
   private async checkForWinner() {
-    const { match } = await stateMatcher();
+    const { match: originalMatch } = await stateMatcher();
+    const match = withMatchEither(originalMatch);
     if (await match(didPlayer1Win)) {
       return 1;
     } else if (await match(didPlayer2Win)) {
@@ -216,7 +185,8 @@ export class SmashApp {
   }
 
   private async checkForMatchOver() {
-    const { match } = this.stateMatcher;
+    const { match: originalMatch } = this.stateMatcher;
+    const match = withMatchEither(originalMatch);
     return (await match(isMatchOver)) && !(await match(isMatchInProgress));
   }
 }

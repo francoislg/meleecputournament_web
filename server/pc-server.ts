@@ -171,7 +171,7 @@ export class PCServer {
 
           this.overlay.sendWinner({ isWinnerFirstPlayer });
 
-          const NEXT_MATCH_IN_SECONDS = 30;
+          const NEXT_MATCH_IN_SECONDS = 40;
           this.overlay.nextMatchIn(NEXT_MATCH_IN_SECONDS);
 
           console.log(
@@ -182,7 +182,7 @@ export class PCServer {
 
           setTimeout(async () => {
             await sendStartNextMatch();
-          }, NEXT_MATCH_IN_SECONDS * 1000);
+          }, (NEXT_MATCH_IN_SECONDS + 3) * 1000);
         } catch (err) {
           console.error("Error in winner handle", err);
         }

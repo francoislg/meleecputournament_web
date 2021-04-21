@@ -70,12 +70,14 @@ export class SmashApp {
         if (await this.trySetAsCPUACoupleOfTimes()) {
           return {
             readyForMatch: true,
+            nextDelay: 1000,
           };
         } else {
           // Failed!
           return {};
         }
       case SmashState.MATCH_FINISHED:
+        await waitFor(500); // Needed somehow.
         await this.ult.pressAOnTheWinScreen();
         return { nextDelay: 1000 };
       case SmashState.MATCH_FINISHED_CHECKING_WINNERS:
@@ -107,6 +109,10 @@ export class SmashApp {
     let tries = 0;
 
     await capture();
+    if (!await matchEither(css)) {
+      console.log("Doesn't match CSS, returning");
+      return false;
+    }
     let isP1Cpu = await matchEither(isPlayerOneACPU);
     let isP2Cpu = await matchEither(isPlayerTwoACPU);
 
@@ -125,6 +131,11 @@ export class SmashApp {
       ]);
 
       await capture();
+
+      if (!await matchEither(css)) {
+        console.log("Doesn't match CSS, returning");
+        return false;
+      }
 
       isP1Cpu = await matchEither(isPlayerOneACPU);
       isP2Cpu = await matchEither(isPlayerTwoACPU);

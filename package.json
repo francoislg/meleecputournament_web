@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "start": "concurrently \"cd overlay && npm run dev\" \"cd server && npm run start\" \"cd ultimaterunner && npm run start\""
+        "start": "concurrently -n overlay,server,runner \"cd overlay && npm run dev\" \"cd server && npm run start\" \"cd ultimaterunner && npm run start\""
     },
     "dependencies": {
         "concurrently": "^6.0.1"

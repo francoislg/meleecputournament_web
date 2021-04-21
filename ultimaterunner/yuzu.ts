@@ -32,7 +32,7 @@ export class YuzuCheck {
     await this.startYuzuIfNotStarted();
     await this.setYuzuWindowBounds();
 
-    if (this.ticks % 3 === 1) {
+    if (this.ticks % 2 === 1) {
       if (this.previousImages.length >= NB_FRAME_FREEZE_DETECTION) {
         this.previousImages.shift();
       }

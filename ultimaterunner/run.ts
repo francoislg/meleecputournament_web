@@ -64,10 +64,7 @@ export const runWithServer = async () => {
     console.log("Booted!");
     await yuzu.tick();
 
-    let nbInProgressInARow = 0;
-    let nbReadyInARow = 0;
     while (1) {
-
       const app = new SmashApp(ult);
 
       const { readyForMatch, playerWon, matchInProgress, nextDelay } = await app.tick();
@@ -78,11 +75,6 @@ export const runWithServer = async () => {
       }
 
       if (readyForMatch) {
-        if (++nbReadyInARow > 10) {
-          nbReadyInARow = 0;
-          // Just in case
-          askForReemit();
-        }
         if (!!currentMatch) {
           if (!charactersSelected) {
             charactersSelected = true;
@@ -108,23 +100,12 @@ export const runWithServer = async () => {
         } else {
           console.log("Waiting for a match")
         }
-      } else {
-        nbReadyInARow = 0;
       }
 
       if (matchInProgress) {
-        if (++nbInProgressInARow > 10) {
-          nbInProgressInARow = 0;
-          console.log("Might be stuck?")
-          /*await ult.pressAOnTheWinScreen();
-          await waitFor(500);
-          await ult.pressAOnTheWinScreen();*/
-        }
         if (!currentMatch) {
           askForReemit();
         }
-      } else {
-        nbInProgressInARow = 0;
       }
 
       if (playerWon) {

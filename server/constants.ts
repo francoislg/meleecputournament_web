@@ -32,7 +32,7 @@ export const CHARACTERS = [
   "Jigglypuff", "Peach", "Daisy", "Bowser", "IceClimbers", "Shiek", "Zelda", "DrMario", "Pichu", "Falco", "Marth", "Lucina",
   "YoungLink", "Ganondorf", "Mewtwo", "Roy", "Chrom", "GameAndWatch", "MetaKnight", "Pit", "DarkPit", "ZeroSuitSamus", "Wario", "Snake",
   "Ike", "PokemonTrainer", "DiddyKong", "Lucas", "Sonic", "KingDeDeDe", "Olimar", "Lucario", "ROB", "ToonLink", "Wolf", "Villager",
-  "MegaMan", "WiiFitTrainer", "Rosalina", "Little Mac", "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",
+  "MegaMan", "WiiFitTrainer", "Rosalina", "LittleMac", "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",
   "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", "Ridley", "Simon", "Richter", "KRool", "Isabelle", "Incineroar", "PiranhaPlant",
   "Joker", "Hero", "BanjoKazooie", "Terry", "Byleth", "MinMin", "Steve", "Sephiroth", "Pyra"
 ];

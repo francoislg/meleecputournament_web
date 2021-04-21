@@ -13,6 +13,11 @@ import {
   getNextTournamentMatch,
   getUpcomingTournamentMatch,
 } from "./tournament-commands";
+import * as ONLINEBOTS from "./onlinebots.json";
+import * as TOPBOTS from "./top100bots.json";
+
+const knownBots = [];
+const JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
 
 // tmi.js doc: https://github.com/tmijs/docs/blob/gh-pages/_posts
 const tmi = require("tmi.js");
@@ -23,18 +28,6 @@ const OAUTH_TOKEN = process.env.AT_TWITCH_OAUTH_TOKEN;
 
 const JOIN_MESSAGE_ENABLED = true;
 const JOIN_TIME_BUFFER_SEC = 20;
-const JOIN_BLACKLIST = [
-  "abbottcostello", // Not sure
-  "bingcortana",
-  "electricallongboard", // Not sure
-  "ftopayr",
-  "havethis2",
-  "icewizerds",
-  "jointeffortt", // Not sure
-  "casinothanks",
-  "streamers_area",
-  "gowithhim",
-];
 
 if (!OAUTH_TOKEN) {
   throw new Error("Twitch token not provided.");
@@ -395,20 +388,19 @@ export class ChatServer {
     if (JOIN_MESSAGE_ENABLED) {
       let peopleToGreet: string[] = [];
       let isFirstJoinSkipped = false;
-      let timeout;
+      let timeout: NodeJS.Timeout;
 
-      client.on("part", async (channel, userName, self, ...args) => {
+      client.on("part", async (channel: string, userName: string, self: boolean) => {
         peopleToGreet = peopleToGreet.filter((p) => p !== userName);
         console.log("Filtered out", userName, peopleToGreet);
       });
 
-      client.on("join", async (channel, userName, self, ...args) => {
-        console.log(`${userName} joined. ${self} ${args}`);
+      client.on("join", async (channel: string, userName: string, self: boolean) => {
         if (self) {
           return;
         }
 
-        if (JOIN_BLACKLIST.indexOf(userName) !== -1) {
+        if (JOIN_BLACKLIST.indexOf(userName.toLowerCase()) !== -1) {
           return;
         }
 

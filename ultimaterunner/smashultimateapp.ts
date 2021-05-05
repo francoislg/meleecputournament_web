@@ -152,12 +152,16 @@ export class SmashApp {
   }
 
   private async getNextState() {
-    let previousState = await this.detectFullState();
+    let previousStates = [];
+    previousStates.push(await this.detectFullState());
+    await waitFor(500);
+    previousStates.push(await this.detectFullState());
     await waitFor(500);
     let state = await this.detectFullState();
-    while (state != previousState) {
-      console.log('State do not match', state, previousState);
-      previousState = state;
+    while (previousStates.some(s => s !== state)) {
+      console.log('State do not match', state, previousStates);
+      previousStates.shift();
+      previousStates.push(state);
       await waitFor(500);
       state = await this.detectFullState();
     }

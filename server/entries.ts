@@ -1,11 +1,11 @@
-import { randomCharacter } from "./constants";
+import { generateName, randomCharacter } from "./constants";
 import { EntryModel } from "./models/Entry";
 
 export const createDummyEntries = async (playersToCreate: number) => {
   const createDummyEntry = () => {
     const entry = new EntryModel();
     const character = randomCharacter();
-    entry.name = `No one's ${character}`;
+    entry.name = generateName(character);
     entry.character = character;
     return entry;
   };

@@ -16,7 +16,19 @@ import {
 import * as ONLINEBOTS from "./onlinebots.json";
 import * as TOPBOTS from "./top100bots.json";
 
-const knownBots = [];
+const knownBots = [
+  "shadowy_stix",
+  "underworldnaiad",
+  "streamersdiscordcommunity",
+  "comettunes",
+  "brokemystreamdeck",
+  "twitchgrowthdiscord",
+  "yosef_the_spammer",
+  "2020",
+  "jdlb",
+  "icantcontrolit",
+  "d4rk_5ky",
+];
 const JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
 
 // tmi.js doc: https://github.com/tmijs/docs/blob/gh-pages/_posts
@@ -140,6 +152,10 @@ const createCommands = ({
     const bet = getNumeric({ client, channel }, { userId, userName }, amount);
 
     if (!bet) {
+      client.say(
+        channel,
+        `${userName} entered a bet without an amount to bet! For instance, you can bet 5 points on #1 with !at bet 1 5.`
+      );
       return;
     }
 
@@ -304,7 +320,7 @@ const createCommands = ({
 
       client.say(
         channel,
-        `${userName} was given ${POINTS_TO_START_WITH} points to start.\nYou can now enter a character with \`!at enter [character] [name]\`, such as \`!at enter Kirby FluffBall\``
+        `${userName} was given ${POINTS_TO_START_WITH} points to start.\nYou can now enter a character with \`!at enter CHARACTER NAME\`, such as \`!at enter Kirby FluffBall\``
       );
     }
   },
@@ -352,7 +368,7 @@ const createCommands = ({
       await newEntry.save();
       await user.save();
 
-      client.say(channel, `${userName} entered ${foundCharacter}.`);
+      client.say(channel, `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ''}.`);
     } else {
       client.say(
         channel,
@@ -390,61 +406,67 @@ export class ChatServer {
       let isFirstJoinSkipped = false;
       let timeout: NodeJS.Timeout;
 
-      client.on("part", async (channel: string, userName: string, self: boolean) => {
-        peopleToGreet = peopleToGreet.filter((p) => p !== userName);
-        console.log("Filtered out", userName, peopleToGreet);
-      });
-
-      client.on("join", async (channel: string, userName: string, self: boolean) => {
-        if (self) {
-          return;
+      client.on(
+        "part",
+        async (channel: string, userName: string, self: boolean) => {
+          peopleToGreet = peopleToGreet.filter((p) => p !== userName);
+          console.log("Filtered out", userName, peopleToGreet);
         }
+      );
 
-        if (JOIN_BLACKLIST.indexOf(userName.toLowerCase()) !== -1) {
-          return;
-        }
-
-        peopleToGreet.push(userName);
-
-        clearTimeout(timeout);
-        timeout = setTimeout(async () => {
-          if (isFirstJoinSkipped) {
-            console.log("To greet", peopleToGreet);
-            const users = await UserModel.find({
-              twitchUsername: {
-                $in: peopleToGreet,
-              },
-            });
-
-            let returning = peopleToGreet
-              .map((p) => users.find((user) => user.twitchUsername === p))
-              .filter((p) => !!p);
-            let newUsers = peopleToGreet.filter(
-              (p) => !users.find((user) => user.twitchUsername === p)
-            );
-            console.log("Greeting", returning, newUsers);
-
-            const messages = [
-              returning.length > 0 &&
-                `Welcome back to: ${returning
-                  .map((r) => `${r.twitchUsername} (${r.points} points)`)
-                  .join(", ")}!`,
-              newUsers.length > 0 &&
-                `Welcome to our unregistered users: ${newUsers.join(
-                  ", "
-                )}! Enter \`!at start\` to register!`,
-            ].filter((m) => !!m);
-
-            if (messages.length > 0) {
-              client.say(channel, messages.join("\n"));
-            }
-          } else {
-            console.log("Skipping the greet", peopleToGreet);
-            isFirstJoinSkipped = true;
+      client.on(
+        "join",
+        async (channel: string, userName: string, self: boolean) => {
+          if (self) {
+            return;
           }
-          peopleToGreet = [];
-        }, JOIN_TIME_BUFFER_SEC * 1000);
-      });
+
+          if (JOIN_BLACKLIST.indexOf(userName.toLowerCase()) !== -1) {
+            return;
+          }
+
+          peopleToGreet.push(userName);
+
+          clearTimeout(timeout);
+          timeout = setTimeout(async () => {
+            if (isFirstJoinSkipped) {
+              console.log("To greet", peopleToGreet);
+              const users = await UserModel.find({
+                twitchUsername: {
+                  $in: peopleToGreet,
+                },
+              });
+
+              let returning = peopleToGreet
+                .map((p) => users.find((user) => user.twitchUsername === p))
+                .filter((p) => !!p);
+              let newUsers = peopleToGreet.filter(
+                (p) => !users.find((user) => user.twitchUsername === p)
+              );
+              console.log("Greeting", returning, newUsers);
+
+              const messages = [
+                returning.length > 0 &&
+                  `Welcome back to: ${returning
+                    .map((r) => `${r.twitchUsername} (${r.points} points)`)
+                    .join(", ")}!`,
+                newUsers.length > 0 &&
+                  `Welcome to our unregistered users: ${newUsers.join(
+                    ", "
+                  )}! Enter \`!at start\` to register!`,
+              ].filter((m) => !!m);
+
+              if (messages.length > 0) {
+                client.say(channel, messages.join("\n"));
+              }
+            } else {
+              console.log("Skipping the greet", peopleToGreet);
+              isFirstJoinSkipped = true;
+            }
+            peopleToGreet = [];
+          }, JOIN_TIME_BUFFER_SEC * 1000);
+        }
+      );
     }
 
     client.on("message", (target, context, msg, self) => {
@@ -456,8 +478,11 @@ export class ChatServer {
       const goodContext = { userName, userId };
 
       const message: string = msg.trim();
-      if (message.toLowerCase().startsWith("!at")) {
-        const [rawCommand, ...terms] = message.substring(3).trim().split(" ");
+      if (message.toLowerCase().startsWith("!")) {
+        const [rawCommand, ...terms] = message
+          .substring(message.toLowerCase().startsWith("!at") ? 3 : 1)
+          .trim()
+          .split(" ");
         const command = rawCommand.toLowerCase();
         console.log(
           `Command received from ${userName}: ${command} ${terms.join(" ")}`
@@ -487,6 +512,14 @@ export class ChatServer {
             )}`
           );
         }
+      } else if (
+        message.toLowerCase().startsWith("hello") ||
+        message.toLowerCase().startsWith("hi")
+      ) {
+        client.say(
+          channel,
+          "Hello! Use `!at start` to register yourself in the game or `!at enter CHARACTER` to enter a character for the next match!"
+        );
       }
     });
     client.on("connected", (addr, port) => {

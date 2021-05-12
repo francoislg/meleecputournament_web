@@ -2,6 +2,8 @@ export enum Inputs {
   A,
   B,
   START,
+  L,
+  R,
   /*POV_NIL,
   POV_UP,
   POV_RIGHT,

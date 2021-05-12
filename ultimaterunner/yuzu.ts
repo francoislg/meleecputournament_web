@@ -12,7 +12,7 @@ import { readWindow, WINDOW_CONFIG_FILE } from './constants';
 const YUZU_PATH = 'C:\\Users\\Fanfo\\AppData\\Local\\yuzu\\yuzu-windows-msvc\\yuzu.exe';
 const SMASH_PATH = 'D:\\Yuzu\\Super Smash Bros Ultimate [01006A800016E000][v0].nsp';
 
-const NB_FRAME_FREEZE_DETECTION = 5;
+const NB_FRAME_FREEZE_DETECTION = 3;
 
 export class YuzuCheck {
   private ticks: number = 0;

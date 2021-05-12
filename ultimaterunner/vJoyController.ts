@@ -101,6 +101,10 @@ export class VJoyController implements LowLevelController {
         return 2;
       case Inputs.START:
         return 3;
+      case Inputs.L:
+        return 4;
+      case Inputs.R:
+        return 5;
       default:
       return null;
     }

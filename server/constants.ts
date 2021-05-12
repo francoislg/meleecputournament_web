@@ -148,7 +148,7 @@ const characterDefs: Record<AllCharacters, CharDef> = {
     aliases: ["Donkey Kong"],
   },
   DrMario: {
-    aliases: ["Dr Mario"],
+    aliases: ["Dr. Mario"],
   },
   DuckHunt: {
     aliases: ["Duck Hunt"],
@@ -269,11 +269,13 @@ const randomFromList = (list: readonly any[]) =>
 
 export const randomCharacter = () => randomFromList(CHARACTERS);
 
+import * as commonAdjectives from "./adjectives.json";
+
 const prefixes = [
+  ...commonAdjectives.map(a => a + " "),
   "Mr ",
   "Ms ",
   "Best ",
-  "Average ",
   "Worst ",
   "Accurate ",
   "Blind ",
@@ -283,7 +285,6 @@ const prefixes = [
   "Cold ",
   "Hot ",
   "Fake ",
-  "Real ",
   "Free ",
   "Huge ",
   "Small ",
@@ -297,7 +298,9 @@ const prefixes = [
   "Red ",
   "Green ",
   "Invisible ",
-  "Deadly "
+  "Deadly ",
+  "Wild ",
+  "A Wild"
 ];
 const suffixes = [
   " McFace",
@@ -320,7 +323,11 @@ const suffixes = [
   " de la Muerte",
   " and the Beast",
   " the Giant",
-  ", of course"
+  ", of course",
+  " Jr",
+  " of the Wild",
+  " of Nature",
+  " of the Family"
 ];
 
 export const generateName = (character: string) => {

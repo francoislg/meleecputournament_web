@@ -15,10 +15,25 @@ import {
 } from "./tournament-commands";
 import * as ONLINEBOTS from "./onlinebots.json";
 import * as TOPBOTS from "./top100bots.json";
+import { writeFile } from "fs/promises";
+
+const updateBots = async () => {
+  try {
+    const res = await fetch("https://api.twitchinsights.net/v1/bots/online");
+    const bots = await res.json();
+    if (bots.length > 0) {
+      const data = bots.bots.map(([name, something, id]) => name);
+      await writeFile("./onlinebots.json", JSON.stringify(data));
+    }
+  } catch (err) {
+    console.error("Could not update bots, but meh", err);
+  }
+}
 
 const knownBots = [
   "shadowy_stix",
   "underworldnaiad",
+  "streamers_on_discord",
   "streamersdiscordcommunity",
   "comettunes",
   "brokemystreamdeck",
@@ -28,6 +43,11 @@ const knownBots = [
   "jdlb",
   "icantcontrolit",
   "d4rk_5ky",
+  "pawlina93",
+  "stormmunity",
+  "social_twitch_discord",
+  "frw33d",
+  "notyosefsa7",
 ];
 const JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
 

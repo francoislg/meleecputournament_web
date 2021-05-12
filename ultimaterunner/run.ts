@@ -69,8 +69,8 @@ export const runWithServer = async () => {
 
       const { readyForMatch, playerWon, matchInProgress, nextDelay } = await app.tick();
 
-      // Do not test for Yuzu if the match is ready to start somehow
-      if (!readyForMatch) {
+      // Do not test for Yuzu if the match is ready to start, otherwise it will detect a freeze while waiting for the start signal.
+      if (!readyForMatch || startCurrentMatch) {
         await yuzu.tick();
       }
 

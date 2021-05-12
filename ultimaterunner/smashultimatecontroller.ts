@@ -65,7 +65,7 @@ class CharacterCursor {
       .execute();
   }
 
-  async getToCharacter(character: string) {
+  async getToCharacter(character: string, color?: number) {
     // It looks like there are a couple of frames of start up for the controller, so the sane thing is to always calibrate them
     await Promise.all([this.controller.press(Inputs.B).execute(), this.calibrate()]);
     const { characters, charactersPerRow, cssBounds, characterBox } = CONSTANTS;
@@ -81,7 +81,12 @@ class CharacterCursor {
       `Player ${this.player} trying to get to ${character} (${index}, ${rowNumber}, ${colNumber}) on ${x},${y}`
     );
     await this.getTo(x, y);
-    await this.controller.press(Inputs.A).execute();
+    await this.controller.press(Inputs.A).andThen();
+    const colorPresses = color ?? Math.random() * 8;
+    for (let i = 0; i < colorPresses; i++) {
+      this.controller.press(Inputs.L).andThen();
+    }
+    await this.controller.execute();
   }
 
   async getTo(targetX: number, targetY: number) {
@@ -163,22 +168,20 @@ export class SmashUltimateControllers {
   }
 
   async moveJustABitToRegisterAsPlayersInCSS() {
-    await Promise.all([
-      this.player1
-        .hold(Inputs.DOWN)
-        .forMilliseconds(300)
-        .andThen()
-        .hold(Inputs.UP)
-        .forMilliseconds(300)
-        .execute(),
-      this.player2
-        .hold(Inputs.DOWN)
-        .forMilliseconds(300)
-        .andThen()
-        .hold(Inputs.UP)
-        .forMilliseconds(300)
-        .execute(),
-    ]);
+    await this.player1
+      .hold(Inputs.DOWN)
+      .forMilliseconds(300)
+      .andThen()
+      .hold(Inputs.UP)
+      .forMilliseconds(300)
+      .execute();
+    await this.player2
+      .hold(Inputs.DOWN)
+      .forMilliseconds(300)
+      .andThen()
+      .hold(Inputs.UP)
+      .forMilliseconds(300)
+      .execute();
   }
 
   async resetControllersPosition() {
@@ -272,6 +275,10 @@ const setInputsForPlayer = async (id: number) => {
     await controller.wait(1000).andThen().press(Inputs.A).execute();
     console.log('Pressing B in 2 sec');
     await controller.wait(2000).andThen().press(Inputs.B).execute();
+    console.log('Pressing L in 2 sec');
+    await controller.wait(1000).andThen().press(Inputs.L).execute();
+    console.log('Pressing R in 2 sec');
+    await controller.wait(1000).andThen().press(Inputs.R).execute();
     console.log('Pressing Start in 2 sec');
     await controller.wait(2000).andThen().press(Inputs.START).execute();
     console.log('Pressing Left and Up in 2 sec');

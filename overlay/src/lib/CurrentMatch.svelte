@@ -12,7 +12,7 @@
 				- <MeleeText text="WINNER" />
 			{/if}
 			<div class="points">
-				{#if $matches.current.match.second.temporary}
+				{#if $matches.current.match.first.temporary}
 					<span class="temporary">Generated character - </span>
 				{/if}
 				{$matches.current.bets.player1} points

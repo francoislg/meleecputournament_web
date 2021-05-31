@@ -22,12 +22,18 @@
 				(#1) {$matches.upcoming.match.first.name}
 				<span class="character">({$matches.upcoming.match.first.character})</span>
 				- {$matches.upcoming.bets.player1} points
+				{#if $matches.upcoming.match.first?.temporary}
+					<div class="temp">Temporary character, take its place with !enter</div>
+				{/if}
 			</div>
 			<div><MeleeText text="VS" /></div>
 			<div>
 				(#2) {$matches.upcoming.match.second.name}
 				<span class="character">({$matches.upcoming.match.second.character})</span>
 				- {$matches.upcoming.bets.player2} points
+				{#if $matches.upcoming.match.second?.temporary}
+					<div class="temp">Temporary character, take its place with !enter</div>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -40,5 +46,9 @@
 
 	.character {
 		font-size: 0.5em;
+	}
+
+	.temp {
+		font-size: 0.7em;
 	}
 </style>

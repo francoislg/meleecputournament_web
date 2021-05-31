@@ -254,6 +254,7 @@ const createCommands = ({
     await user.save();
 
     overlay.updateMatchesData();
+    overlay.updateEntries();
     client.say(
       channel,
       `${userName} bet ${bet} points on "${

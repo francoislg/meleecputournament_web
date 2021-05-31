@@ -25,6 +25,7 @@ export interface PlayerMessageMeta {
   id: string;
   name: string;
   character: string;
+  temporary?: boolean;
 }
 
 if (!CHALLONGE_API_KEY) {

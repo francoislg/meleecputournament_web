@@ -112,11 +112,13 @@ const findCompleteMatchMetaFromMatch = async (
       id: match.player1Id,
       character: firstParticipant?.character || "???",
       name: firstParticipant?.name || "???",
+      temporary: !firstParticipant?.userId,
     },
     second: {
       id: match.player2Id,
       character: secondParticipant?.character || "???",
       name: secondParticipant?.name || "???",
+      temporary: !secondParticipant?.userId,
     },
   };
 };
@@ -160,11 +162,13 @@ export const getUpcomingSingleMatch =
       _id: id = 0,
       character = "???",
       name = "The next entry or a dummy",
+      userId,
     } = entries[0] || {};
     const {
       _id: secondId = 0,
       character: secondCharacter = "???",
       name: secondName = "The next entry or a dummy",
+      userId: secondUserId,
     } = entries[1] || {};
 
     const count = await SingleMatchModel.countDocuments();
@@ -175,11 +179,13 @@ export const getUpcomingSingleMatch =
         id,
         character,
         name,
+        temporary: !userId
       },
       second: {
         id: secondId,
         character: secondCharacter,
         name: secondName,
+        temporary: !secondUserId
       },
     };
   };

@@ -11,15 +11,26 @@
 			{#if $winner && $winner.isWinnerFirstPlayer}
 				- <MeleeText text="WINNER" />
 			{/if}
-			<div class="points">{$matches.current.bets.player1} points</div>
+			<div class="points">
+				{#if $matches.current.match.second.temporary}
+					<span class="temporary">Generated character - </span>
+				{/if}
+				{$matches.current.bets.player1} points
+			</div>
 		</div>
 		<div class="right">
 			{$matches.current.match.second.name}
 			<span class="character">({$matches.current.match.second.character})</span>
+
 			{#if $winner && !$winner.isWinnerFirstPlayer}
 				- <MeleeText text="WINNER" />
 			{/if}
-			<div class="points">{$matches.current.bets.player2} points</div>
+			<div class="points">
+				{#if $matches.current.match.second.temporary}
+					<span class="temporary">Generated character - </span>
+				{/if}
+				{$matches.current.bets.player2} points
+			</div>
 		</div>
 	</div>
 {/if}
@@ -48,6 +59,10 @@
 	}
 
 	.character {
+		font-size: 0.5em;
+	}
+
+	.temporary {
 		font-size: 0.5em;
 	}
 

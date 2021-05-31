@@ -130,6 +130,7 @@ const getMatches = async (): Promise<MatchesInfo> => {
 const getLatestEntries = async (): Promise<EntriesInfo> => {
   const entries = await EntryModel.find({
     tournamentId: null,
+    userId: {$exists: true},
   })
     .sort({
       createdAt: -1,

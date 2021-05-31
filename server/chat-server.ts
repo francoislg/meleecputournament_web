@@ -253,6 +253,7 @@ const createCommands = ({
     await betEntry.save();
     await user.save();
 
+    overlay.updateMatchesData();
     client.say(
       channel,
       `${userName} bet ${bet} points on "${
@@ -332,6 +333,7 @@ const createCommands = ({
       client.say(channel, `${userName} was already registered.`);
       return;
     } else {
+      // Make this match the `enter` if not registered, I'm too lazy
       const newUser = new UserModel();
       newUser.twitchId = userId;
       newUser.twitchUsername = userName;
@@ -370,7 +372,7 @@ const createCommands = ({
     if (!foundCharacter) {
       client.say(
         channel,
-        `${userName} didn't enter a real character name. See the list of valid characters in the channel description.`
+        `The character \"${character}\" from ${userName} was not properly detected. See the list of valid characters in the channel description.`
       );
       return;
     }
@@ -379,23 +381,29 @@ const createCommands = ({
       twitchId: userId,
     });
 
-    if (user) {
-      const newEntry = new EntryModel();
-      newEntry.userId = userId;
-      newEntry.name = name || `${userName}'s ${foundCharacter}`;
-      newEntry.character = foundCharacter;
+    if (!user) {
+      // Please make this match the `start` command, I'm too lazy
+      const newUser = new UserModel();
+      newUser.twitchId = userId;
+      newUser.twitchUsername = userName;
+      newUser.points = POINTS_TO_START_WITH;
+      await newUser.save();
 
-      await newEntry.save();
-      await user.save();
-
-      client.say(channel, `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ''}.`);
-    } else {
       client.say(
         channel,
-        `${userName} must first register with the "start" command.`
+        `${userName} was given ${POINTS_TO_START_WITH} points to start.`
       );
-      return;
     }
+
+    const newEntry = new EntryModel();
+    newEntry.userId = userId;
+    newEntry.name = name || `${userName}'s ${foundCharacter}`;
+    newEntry.character = foundCharacter;
+
+    await newEntry.save();
+
+    overlay.updateMatchesData();
+    client.say(channel, `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ''}.`);
   },
 });
 

@@ -177,6 +177,14 @@ export class OverlayServer {
     this.emitAll("matches", await getMatches());
   }
 
+  async updateLeaderboard() {
+    this.emitAll("leaderboard", await getLeaderboard());
+  }
+
+  async updateEntries() {
+    this.emitAll("entries", await getLatestEntries());
+  }
+
   async nextMatchIn(timeInSeconds: number) {
     this.emitAll("nextmatchin", timeInSeconds);
   }

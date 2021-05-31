@@ -5,6 +5,24 @@ import { ISingleMatchModel, SingleMatchModel } from "./models/SingleMatch";
 import { createDummyEntries } from "./entries";
 import { getBetsForMatch, MatchMessage } from "./tournament-commands";
 
+// BE CAREFUL, with `.aggregate`, the entries do not have the `id` property.
+const twoNextEntries = () =>
+  EntryModel.aggregate([
+    {
+      $addFields: {
+        isDummy: { $cond: [{ $not: ["$userId"] }, 2, 1] },
+      },
+    },
+  ])
+    .match({
+      tournamentId: null,
+    })
+    .sort({
+      isDummy: 1,
+      createdAt: 1,
+    })
+    .limit(2);
+
 export const FAKE_TOURNAMENT_ID = "singlematches";
 
 const NUMBER_OF_ENTRIES_FOR_TOURNAMENT = 8;
@@ -64,11 +82,7 @@ export const finishSingleMatch = async (
   const wins = await Promise.all(
     bets.map(async ({ userId, bet }) => givePointsToUser(userId, bet * 2))
   );
-  awards.push(
-    ...(
-      wins.filter((a) => a !== null) as Award[]
-    )
-  );
+  awards.push(...(wins.filter((a) => a !== null) as Award[]));
 
   await SingleMatchModel.findOneAndUpdate(
     {
@@ -97,12 +111,12 @@ const findCompleteMatchMetaFromMatch = async (
     first: {
       id: match.player1Id,
       character: firstParticipant?.character || "???",
-      name: firstParticipant?.name || "Winner of the current match",
+      name: firstParticipant?.name || "???",
     },
     second: {
       id: match.player2Id,
       character: secondParticipant?.character || "???",
-      name: secondParticipant?.name || "Winner of the current match",
+      name: secondParticipant?.name || "???",
     },
   };
 };
@@ -121,47 +135,54 @@ export const getNextSingleMatch = async (): Promise<MatchMessage | null> => {
   return findCompleteMatchMetaFromMatch(match);
 };
 
-export const getUpcomingSingleMatch = async (): Promise<MatchMessage | null> => {
-  console.log("Getting upcoming single match");
+export const getUpcomingSingleMatch =
+  async (): Promise<MatchMessage | null> => {
+    console.log("Getting upcoming single match");
 
-  const match = await SingleMatchModel.findOne({
-    started: false,
-    winner: 0,
-  });
+    const match = await SingleMatchModel.findOne({
+      started: false,
+      winner: 0,
+    });
 
-  if (match) {
-    console.log("Found existing upcoming match");
-    return findCompleteMatchMetaFromMatch(match);
-  }
+    if (match) {
+      console.log("Found existing upcoming match");
+      return findCompleteMatchMetaFromMatch(match);
+    }
 
-  const entries = await EntryModel.find({
-    tournamentId: null,
-  }).limit(2);
+    const entries = await twoNextEntries();
 
-  const { id = 0, character = "???", name = "The next entry or a dummy" } =
-    entries[0] || {};
-  const {
-    id: secondId = 0,
-    character: secondCharacter = "???",
-    name: secondName = "The next entry or a dummy",
-  } = entries[1] || {};
+    if (entries.length < 2) {
+      const created = await createDummyEntries(2 - entries.length);
+      entries.push(...created);
+    }
 
-  const count = await SingleMatchModel.countDocuments();
+    const {
+      _id: id = 0,
+      character = "???",
+      name = "The next entry or a dummy",
+    } = entries[0] || {};
+    const {
+      _id: secondId = 0,
+      character: secondCharacter = "???",
+      name: secondName = "The next entry or a dummy",
+    } = entries[1] || {};
 
-  return {
-    matchId: count,
-    first: {
-      id,
-      character,
-      name,
-    },
-    second: {
-      id: secondId,
-      character: secondCharacter,
-      name: secondName,
-    },
+    const count = await SingleMatchModel.countDocuments();
+
+    return {
+      matchId: count,
+      first: {
+        id,
+        character,
+        name,
+      },
+      second: {
+        id: secondId,
+        character: secondCharacter,
+        name: secondName,
+      },
+    };
   };
-};
 
 export const getBetsForSingleMatch = async (
   matchId: number
@@ -183,11 +204,7 @@ export const officiallyStartSingleMatch = async (matchId: number) => {
 export const createSingleMatch = async (): Promise<MatchMessage> => {
   console.log(`Creating a single match`);
 
-  const entries = await EntryModel.find({
-    tournamentId: null,
-  }).limit(2);
-
-  const playersToAdd = entries;
+  const playersToAdd = await twoNextEntries();
 
   if (playersToAdd.length < 2) {
     const created = await createDummyEntries(2 - playersToAdd.length);
@@ -198,15 +215,15 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
   const match = new SingleMatchModel();
   match.matchId = count;
   match.started = false;
-  match.player1Id = playersToAdd[0].id;
-  match.player2Id = playersToAdd[1].id;
+  match.player1Id = playersToAdd[0].id || playersToAdd[0]._id;
+  match.player2Id = playersToAdd[1].id || playersToAdd[1]._id;
   match.winner = 0;
   match.save();
 
   await EntryModel.updateMany(
     {
       _id: {
-        $in: playersToAdd.map((p) => p.id),
+        $in: playersToAdd.map((p) => p.id || p._id),
       },
     },
     {

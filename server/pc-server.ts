@@ -172,6 +172,8 @@ export class PCServer {
           this.overlay.sendWinner({ isWinnerFirstPlayer });
 
           const NEXT_MATCH_IN_SECONDS = 40;
+          this.overlay.updateLeaderboard();
+          this.overlay.updateEntries();
           this.overlay.nextMatchIn(NEXT_MATCH_IN_SECONDS);
 
           console.log(

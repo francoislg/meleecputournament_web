@@ -138,11 +138,10 @@ export class PCServer {
           if (await hasSingleMatchInProgress()) {
             const wins = await finishSingleMatch(matchId, {
               winnerId: winner.id,
-              winnerName: winner.name,
               isWinnerFirstPlayer,
             });
             if (wins.length > 0) {
-              this.chat.sendMessage(`Wins for this match: ${wins.map(({userName, points}) => `${userName} +${points}`).join(", ")}`)
+              this.chat.sendMessage(`${winner.name} won! Points awarded: ${wins.map(({userName, points}) => `${userName} +${points}`).join(", ")}`)
             }
             return true;
           } else {
@@ -150,7 +149,6 @@ export class PCServer {
               const tournament = await getNextTournament();
               await finishMatch(tournament.id, matchId, {
                 winnerId: winner.id,
-                winnerName: winner.name,
                 isWinnerFirstPlayer,
               });
               return true;

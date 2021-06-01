@@ -39,9 +39,8 @@ export const finishMatch = async (
   matchId: number,
   {
     winnerId,
-    winnerName,
     isWinnerFirstPlayer,
-  }: { winnerId: number; winnerName: string; isWinnerFirstPlayer: boolean }
+  }: { winnerId: number; isWinnerFirstPlayer: boolean }
 ) => {
   console.log(`Finishing match ${tournamentId}/${matchId}: ${winnerId}`);
   await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
@@ -50,10 +49,7 @@ export const finishMatch = async (
       scores_csv: isWinnerFirstPlayer ? `1-0` : `0-1`,
     },
   });
-  const entry = await EntryModel.findOne({
-    tournamentId: tournamentId,
-    name: winnerName,
-  });
+  const entry = await EntryModel.findById(winnerId);
   if (entry?.userId) {
     await givePointsToUser(entry.userId, 5);
   }

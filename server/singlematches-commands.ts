@@ -53,15 +53,11 @@ export const finishSingleMatch = async (
   matchId: number,
   {
     winnerId,
-    winnerName,
     isWinnerFirstPlayer,
-  }: { winnerId: number; winnerName: string; isWinnerFirstPlayer: boolean }
+  }: { winnerId: number; isWinnerFirstPlayer: boolean }
 ) => {
   console.log(`Finishing match ${FAKE_TOURNAMENT_ID}/${matchId}: ${winnerId}`);
-  const entry = await EntryModel.findOne({
-    tournamentId: FAKE_TOURNAMENT_ID,
-    name: winnerName,
-  });
+  const entry = await EntryModel.findById(winnerId);
 
   let awards: Award[] = [];
 

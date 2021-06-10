@@ -43,7 +43,7 @@ export const hasSingleMatchInProgress = async () => {
   return match !== null;
 };
 
-type Award = {
+export type Award = {
   points: number;
   userId: string;
   userName: string;

@@ -48,6 +48,8 @@ const knownBots = [
   "social_twitch_discord",
   "frw33d",
   "notyosefsa7",
+  "peculiarasmr",
+  "pro_gamer_network"
 ];
 const JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
 

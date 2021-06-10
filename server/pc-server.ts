@@ -63,7 +63,10 @@ export class PCServer {
               this.overlay.updateMatchesData();
               console.log("Match properly sent");
             } else {
-              await finishTournament(tournament.id);
+              const wins = await finishTournament(tournament.id);
+              if (wins.length > 0) {
+                this.chat.sendMessage(`Tournament won! Points awarded: ${wins.map(({userName, points}) => `${userName} +${points}`).join(", ")}`)
+              }
               await sendNextMatch();
             }
           }
@@ -147,10 +150,13 @@ export class PCServer {
           } else {
             try {
               const tournament = await getNextTournament();
-              await finishMatch(tournament.id, matchId, {
+              const wins = await finishMatch(tournament.id, matchId, {
                 winnerId: winner.id,
                 isWinnerFirstPlayer,
               });
+              if (wins.length > 0) {
+                this.chat.sendMessage(`${winner.name} won! Points awarded: ${wins.map(({userName, points}) => `${userName} +${points}`).join(", ")}`)
+              }
               return true;
             } catch (err) {
               console.error("Error while registering win, will retry", err);

@@ -10,6 +10,7 @@ import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
 import { BetModel } from "./models/Bet";
 import { createDummyEntries } from "./entries";
+import { Award, givePointsToUser } from "./singlematches-commands";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
@@ -43,29 +44,58 @@ export const finishMatch = async (
   }: { winnerId: number; isWinnerFirstPlayer: boolean }
 ) => {
   console.log(`Finishing match ${tournamentId}/${matchId}: ${winnerId}`);
-  await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
+  const match = await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
     match: {
       winner_id: winnerId,
       scores_csv: isWinnerFirstPlayer ? `1-0` : `0-1`,
     },
   });
-  const entry = await EntryModel.findById(winnerId);
-  if (entry?.userId) {
-    await givePointsToUser(entry.userId, 5);
+
+  let awards: Award[] = [];
+
+  try {
+    const participants = await ParticipantAdapter.index(
+      CHALLONGE_API_KEY,
+      tournamentId
+    );
+    const findParticipant = async (id: number) => {
+      const participant = participants.participants.find(
+        (participant) => participant.id === id
+      );
+      return !!participant ? await EntryModel.findById(participant.misc) : null;
+    };
+    console.log("PARTICIPANTS", participants)
+    const winner = await findParticipant(isWinnerFirstPlayer ? match.match.player1_id : match.match.player2_id);
+    console.log("WINNER", winner);
+    if (winner?.userId) {
+      const award = await givePointsToUser(winner.userId, 5);
+      if (award) {
+        awards.push(award);
+      }
+    }
+  } catch (err) {
+    console.error("Error while awarding the entry's user", err);
   }
-  const bets = await BetModel.find({
-    matchId,
-    tournamentId,
-    player: isWinnerFirstPlayer ? 1 : 2,
-  });
 
-  console.log("found bets", bets);
+  console.log("Getting to bets");
+  try {
+    const bets = await BetModel.find({
+      matchId,
+      tournamentId,
+      player: isWinnerFirstPlayer ? 1 : 2,
+    });
 
-  await Promise.all(
-    bets.map(async ({ userId, bet }) => {
-      await givePointsToUser(userId, bet * 2);
-    })
-  );
+    console.log("found bets", bets);
+
+    const wins = await Promise.all(
+      bets.map(async ({ userId, bet }) => givePointsToUser(userId, bet * 2))
+    );
+    awards.push(...(wins.filter((a) => a !== null) as Award[]));
+  } catch (error) {
+    console.error("Error while awarding bets", error);
+  }
+
+  return awards;
 };
 export const getNextTournament = async (): Promise<{
   id: string;
@@ -95,7 +125,7 @@ export const getNextTournament = async (): Promise<{
     return {
       id: found.tournament.id.toString(),
       url: found.tournament.url,
-      isPending: found.tournament.state === 'pending',
+      isPending: found.tournament.state === "pending",
     };
   }
 };
@@ -315,22 +345,11 @@ export const finishTournament = async (tournamentId: string) => {
       inProgress: false,
     }
   );
-  await givePointsToWinner(tournamentId);
+  return await givePointsToWinner(tournamentId);
 };
-export const givePointsToUser = async (twitchId: string, points: number) => {
-  await UserModel.updateOne(
-    {
-      twitchId,
-    },
-    {
-      $inc: {
-        points,
-      },
-    }
-  );
-  console.log(`Gave ${points} to ${twitchId}`);
-};
+
 export const givePointsToWinner = async (tournamentId: string) => {
+  const awards = [];
   try {
     const participants = await ParticipantAdapter.index(
       CHALLONGE_API_KEY,
@@ -351,7 +370,7 @@ export const givePointsToWinner = async (tournamentId: string) => {
           }
         );
         const totalPoints = 50;
-        await givePointsToUser(entry.userId, totalPoints);
+        awards.push(await givePointsToUser(entry.userId, totalPoints));
       } else {
         console.error("TOURNAMENT RESULT: A bot won, too bad.");
       }
@@ -361,4 +380,5 @@ export const givePointsToWinner = async (tournamentId: string) => {
   } catch (error) {
     console.error("TOURNAMENT RESULT: meh, didn't work", error);
   }
+  return awards;
 };

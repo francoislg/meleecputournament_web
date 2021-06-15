@@ -11,6 +11,7 @@ import { UserModel } from "./models/User";
 import { BetModel } from "./models/Bet";
 import { createDummyEntries } from "./entries";
 import { Award, givePointsToUser } from "./singlematches-commands";
+import { importantLog } from "./log";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
@@ -74,6 +75,7 @@ export const finishMatch = async (
       }
     }
   } catch (err) {
+    importantLog("Error while awarding the entry's user", err.toString());
     console.error("Error while awarding the entry's user", err);
   }
 
@@ -92,6 +94,7 @@ export const finishMatch = async (
     );
     awards.push(...(wins.filter((a) => a !== null) as Award[]));
   } catch (error) {
+    importantLog("Error while awarding bets", error.toString());
     console.error("Error while awarding bets", error);
   }
 

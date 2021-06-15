@@ -184,39 +184,6 @@ export const setup = async () => {
     }
   });
 };
-/*
-const screenSetup = async (): Promise<{ x: number; y: number }> => {
-  let previous;
-  try {
-    previous = await readWindow();
-  } catch {}
-  const answer = await question(
-    `Enter the window position to capture with this format: x,y. The window needs to be 1080p. Refer to ${FULL_SCREEN_FILE}. ${
-      previous
-        ? `Keep empty to use the previous values (${previous.x},${previous.y})`
-        : 'There were no previous values, so you must provide one.'
-    }.`
-  );
-
-  if (answer) {
-    const [stringX, stringY] = answer.split(',');
-    const x = parseInt(stringX);
-    const y = parseInt(stringY);
-
-    await writeFile(
-      WINDOW_CONFIG_FILE,
-      JSON.stringify({
-        x,
-        y,
-      }),
-      'utf-8'
-    );
-
-    return { x, y };
-  } else {
-    return readWindow();
-  }
-};*/
 
 const yesnoQuestion = async (q: string) => {
   const answer = ((await question(`${q} (Y/n).`)) || 'y').toLowerCase();

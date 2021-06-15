@@ -8,6 +8,7 @@ import { spawn } from 'child_process';
 import { SmashUltimateControllers } from './smashultimatecontroller';
 import { writeFile } from 'fs/promises';
 import { readWindow, WINDOW_CONFIG_FILE } from './constants';
+import { importantLog } from './log';
 
 const YUZU_PATH = 'C:\\Users\\Fanfo\\AppData\\Local\\yuzu\\yuzu-windows-msvc\\yuzu.exe';
 const SMASH_PATH = 'D:\\Yuzu\\Super Smash Bros Ultimate [01006A800016E000][v0].nsp';
@@ -42,6 +43,7 @@ export class YuzuCheck {
         const firstImage = this.previousImages[0];
         const areAllSimilar = this.previousImages.every((im) => im.isMatching(firstImage));
         if (areAllSimilar) {
+          importantLog("FREEZE DETECTED, RESTARTING")
           console.log('FREEZE DETECTED, RESTARTING');
           await this.restartYuzu();
         }

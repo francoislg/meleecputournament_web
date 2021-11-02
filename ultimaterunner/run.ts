@@ -6,6 +6,8 @@ import { io } from 'socket.io-client';
 import type { MatchResponseMessage } from '../server/pc-server';
 import type { MatchMessage } from '../server/tournament-commands';
 import { IS_USING_REAL_SWITCH } from './args';
+import { capture } from './states';
+import { hasCharacterImage, player1Pick, player2Pick } from './smashultimatestates';
 
 const SECRET_PC_KEY = 'zunHp5gte9kBVUiqzXYw33eN3po78L';
 
@@ -88,6 +90,15 @@ export const runWithServer = async () => {
             await waitFor(500);
           }
           if (startCurrentMatch) {
+            // This should collect the character pick, could be used later on to validate the actual pick.
+            const image = await capture();
+            if (!await hasCharacterImage(currentMatch.first.character)) {
+              image.getRegion(player1Pick.region).save(player1Pick.referenceFile(currentMatch.first.character));
+            } 
+            if (!await hasCharacterImage(currentMatch.second.character)) {
+              image.getRegion(player2Pick.region).save(player2Pick.referenceFile(currentMatch.second.character))
+            }
+
             await ult.startMatch();
             await waitFor(2000);
             // Failsafe if the match didn't start for some reason.

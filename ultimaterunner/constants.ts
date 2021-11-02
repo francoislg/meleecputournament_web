@@ -5,6 +5,7 @@ export const WINDOW_SIZE = {
     w: 1920,
     h: 1080,
 };
+export const CHARACTERS_FOLDER= 'characters';
 export const REFERENCES_FOLDER = 'references';
 export const WINDOW_CONFIG_FILE = './windowconfig.json';
 

@@ -33,7 +33,7 @@ const CONSTANTS = {
   },
   cssCursorSpeedPer100Ms: {
     x: 450 / 5,
-    y: 450 / 5, // ~450 on a 500ms scale.
+    y: 470 / 5, // ~450 on a 500ms scale.
     diagonalMultiplicator: 1.5, // found 275 distance when up+right.
   },
   bounds: {

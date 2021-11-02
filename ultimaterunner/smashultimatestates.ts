@@ -1,5 +1,6 @@
-import { REFERENCES_FOLDER } from './constants';
+import { CHARACTERS_FOLDER, REFERENCES_FOLDER } from './constants';
 import { AppState } from './states';
+import { access } from 'fs/promises';
 
 export const mainMenu: AppState = {
   description: 'The main menu, with the Smash, Spirits, Vault, etc...',
@@ -103,10 +104,39 @@ export const didPlayer1Win: AppState = {
 export const didPlayer2Win: AppState = {
   description: 'Whether the player 2 won',
   referenceFile: REFERENCES_FOLDER + '/p2won.png',
-  region:  {
+  region: {
     x: 1492,
     y: 54,
     w: 50,
     h: 10,
   },
+};
+
+export const player1Pick = {
+  referenceFile: (characterName: string) => `${CHARACTERS_FOLDER}/${characterName}.png`,
+  region: {
+    x: 549,
+    y: 856,
+    w: 200,
+    h: 10,
+  },
+};
+
+export const player2Pick = {
+  referenceFile: (characterName: string) => `${CHARACTERS_FOLDER}/${characterName}.png`,
+  region: {
+    x: 1464,
+    y: 856,
+    w: 200,
+    h: 10,
+  },
+};
+
+export const hasCharacterImage = async (characterName: string) => {
+  try {
+    await access(`${CHARACTERS_FOLDER}/${characterName}.png`);
+    return true;
+  } catch {
+    return false;
+  }
 };

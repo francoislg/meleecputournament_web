@@ -22,7 +22,7 @@ const CONSTANTS = {
   ],
   charactersPerRow: 13,
   characterBox: {
-    w: 140,
+    w: 135,
     h: 80,
   },
   cssBounds: {
@@ -64,14 +64,14 @@ class CharacterCursor {
   async setAsCPU() {
     await this.controller
       .hold(Inputs.RIGHT)
-      .forMilliseconds(this.player * 600)
+      .forMilliseconds(this.player * 700)
       .andThen()
       .press(Inputs.A)
       .execute();
     await waitFor(500);
   }
 
-  async getToCharacter(character: string, color?: number) {
+  async getToCharacter(character: string) {
     // It looks like there are a couple of frames of start up for the controller, so the sane thing is to always calibrate them
     await Promise.all([this.controller.press(Inputs.B).execute(), this.calibrate()]);
     const { characters, charactersPerRow, cssBounds, characterBox } = CONSTANTS;
@@ -88,10 +88,6 @@ class CharacterCursor {
     );
     await this.getTo(x, y);
     await this.controller.press(Inputs.A).andThen();
-    const colorPresses = color ?? Math.random() * 8;
-    for (let i = 0; i < colorPresses; i++) {
-      this.controller.press(Inputs.L).andThen();
-    }
     await this.controller.execute();
   }
 
@@ -136,6 +132,14 @@ class CharacterCursor {
       this.controller.hold(Inputs.DOWN).forMilliseconds(Math.round(timeY));
     }
 
+    await this.controller.execute();
+  }
+
+  async selectColor(color?: number) {
+    const colorPresses = color ?? Math.random() * 8;
+    for (let i = 0; i < colorPresses; i++) {
+      this.controller.press(Inputs.L).andThen();
+    }
     await this.controller.execute();
   }
 }
@@ -221,6 +225,11 @@ export class SmashUltimateControllers {
     await waitFor(500);
     await this.player2CSSCursor.getToCharacter(player2);
     await waitFor(500);
+  }
+
+  async selectColors() {
+    await this.player1CSSCursor.selectColor();
+    await this.player2CSSCursor.selectColor();
   }
 
   async startMatch() {

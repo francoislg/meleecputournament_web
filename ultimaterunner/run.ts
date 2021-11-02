@@ -1,13 +1,20 @@
 import { randomCharacter, withController } from './smashultimatecontroller';
 import { SmashApp } from './smashultimateapp';
-import { YuzuCheck } from "./yuzu"
+import { YuzuCheck } from './yuzu';
 import { io } from 'socket.io-client';
 
 import type { MatchResponseMessage } from '../server/pc-server';
 import type { MatchMessage } from '../server/tournament-commands';
 import { IS_USING_REAL_SWITCH } from './args';
 import { capture } from './states';
-import { hasCharacterImage, player1Pick, player2Pick } from './smashultimatestates';
+import {
+  characterReferenceFile,
+  getCharacterImageIfExist,
+  player1Pick,
+  player2Pick,
+} from './smashultimatestates';
+import { importantLog } from './log';
+import { Image, Region } from './screencapture';
 
 const SECRET_PC_KEY = 'zunHp5gte9kBVUiqzXYw33eN3po78L';
 
@@ -21,9 +28,9 @@ export const runWithServer = async () => {
   let bufferedWinner: number | null;
 
   socket.on('match', async (match: MatchMessage) => {
-    console.log("Received match!", match);
+    console.log('Received match!', match);
     if (bufferedWinner) {
-      console.log("Stored a winner without a match, sending it now!");
+      console.log('Stored a winner without a match, sending it now!');
       reportWinner(bufferedWinner, match);
     } else {
       currentMatch = match;
@@ -35,10 +42,10 @@ export const runWithServer = async () => {
   });
 
   const askForReemit = () => {
-    console.log("Asking to re emit match");
+    console.log('Asking to re emit match');
     socket.emit('reemitlast');
     charactersSelected = false;
-  }
+  };
 
   const reportWinner = (player: number, match: MatchMessage) => {
     const isWinnerFirstPlayer = player === 1;
@@ -53,19 +60,34 @@ export const runWithServer = async () => {
     bufferedWinner = null;
     charactersSelected = false;
     startCurrentMatch = false;
-  }
+  };
 
   socket.on('connect', () => {
     socket.emit('iamtheserver', SECRET_PC_KEY, IS_RECONNECTING);
     IS_RECONNECTING = true;
   });
 
-  await withController(async (ult) => {
+  const checkCharacterPick = async (image: Image, characterName: string, region: Region) => {
+    const referenceImage = await getCharacterImageIfExist(characterName);
+    const toCheck = image.getRegion(region);
+    if (referenceImage) {
+      if (referenceImage.isMatching(toCheck, 0.05)) {
+        importantLog(characterName + ' matches');
+      } else {
+        importantLog(characterName + " doesn't matches");
+        await toCheck.save(characterReferenceFile(characterName + '_tocompare'));
+      }
+    } else {
+      console.log('Taking pick for', characterName);
+      await toCheck.save(characterReferenceFile(characterName));
+    }
+  };
 
+  await withController(async (ult) => {
     const yuzu = new YuzuCheck(ult);
     if (!IS_USING_REAL_SWITCH) {
       await yuzu.boot();
-      console.log("Booted!");
+      console.log('Booted!');
       await yuzu.tick();
     }
 
@@ -85,36 +107,37 @@ export const runWithServer = async () => {
         if (!!currentMatch) {
           if (!charactersSelected) {
             charactersSelected = true;
-            await ult.justSelectCharacters(currentMatch.first.character,
-              currentMatch.second.character);
+            await ult.justSelectCharacters(
+              currentMatch.first.character,
+              currentMatch.second.character
+            );
             await waitFor(500);
-          }
-          if (startCurrentMatch) {
             // This should collect the character pick, could be used later on to validate the actual pick.
             const image = await capture();
-            if (!await hasCharacterImage(currentMatch.first.character)) {
-              image.getRegion(player1Pick.region).save(player1Pick.referenceFile(currentMatch.first.character));
-            } 
-            if (!await hasCharacterImage(currentMatch.second.character)) {
-              image.getRegion(player2Pick.region).save(player2Pick.referenceFile(currentMatch.second.character))
-            }
+            await checkCharacterPick(image, currentMatch.first.character, player1Pick.region);
+            await checkCharacterPick(image, currentMatch.second.character, player2Pick.region);
 
+            await ult.selectColors();
+          }
+          if (startCurrentMatch) {
             await ult.startMatch();
             await waitFor(2000);
             // Failsafe if the match didn't start for some reason.
-            const {readyForMatch} = await app.tick();
+            const { readyForMatch } = await app.tick();
             if (readyForMatch) {
-              console.log("Resetting the character selection, looks like it didn't start the match")
+              console.log(
+                "Resetting the character selection, looks like it didn't start the match"
+              );
               charactersSelected = false;
             }
           } else {
-            console.log("Server did not send the OK");
+            console.log('Server did not send the OK');
           }
         } else if (startCurrentMatch) {
           console.log("Have no match but it's ready, need to reemit!");
           askForReemit();
         } else {
-          console.log("Waiting for a match")
+          console.log('Waiting for a match');
         }
       }
 

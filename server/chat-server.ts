@@ -50,7 +50,8 @@ const knownBots = [
   "notyosefsa7",
   "peculiarasmr",
   "pro_gamer_network",
-  "sad_grl"
+  "sad_grl",
+  "servres",
 ];
 const JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
 

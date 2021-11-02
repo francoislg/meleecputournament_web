@@ -1,5 +1,8 @@
 import { VJoyController } from './vJoyController';
-import { AsyncController, Inputs } from './controller';
+import { AsyncController, Inputs, LowLevelController } from './controller';
+import { IS_USING_REAL_SWITCH } from './args';
+import { SerialController } from './serialController';
+import SerialPort from 'serialport';
 
 const EMPTYSPOT = 'EMPTY';
 const RANDOMSPOT = 'RANDOM';
@@ -235,11 +238,27 @@ export class SmashUltimateControllers {
   }
 }
 
+let serialPort: SerialPort;
+const getPort = async () => {
+  if (!serialPort) {
+  serialPort = new SerialPort("\\COM9", {baudRate:9600}, (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log("Serial OK");
+    }
+  });
+  serialPort.on("error", (err) => console.error(err));
+} 
+return serialPort;
+}
+
 export const withController = async (
   handle: (controller: SmashUltimateControllers) => Promise<void>
 ) => {
-  let player1 = new VJoyController(1);
-  let player2 = new VJoyController(2);
+ 
+  let player1 = IS_USING_REAL_SWITCH ? new SerialController(await getPort(), 1) : new VJoyController(1);
+  let player2 = IS_USING_REAL_SWITCH ? new SerialController(await getPort(), 2) : new VJoyController(2);
   try {
     player1.releaseAll();
     player2.releaseAll();
@@ -268,7 +287,7 @@ export const setInputs = async () => {
 
 const setInputsForPlayer = async (id: number) => {
   console.log(`Setting up player ${id}`);
-  let player: VJoyController = new VJoyController(id);
+  let player: LowLevelController = IS_USING_REAL_SWITCH ? new SerialController(await getPort(), id) : new VJoyController(1);;
   try {
     const controller = new AsyncController(player);
     console.log('Pressing A in 1 sec');

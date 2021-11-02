@@ -29,6 +29,7 @@ export interface LowLevelController {
   hold(input: Inputs): this;
   release(input: Inputs): this;
   releaseAll(): this;
+  free(): void;
 }
 
 interface Command {

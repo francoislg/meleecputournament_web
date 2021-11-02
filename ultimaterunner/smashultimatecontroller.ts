@@ -11,17 +11,18 @@ const RANDOMSPOT = 'RANDOM';
 const CONSTANTS = {
   // prettier-ignore
   characters: [
-    "Mario", "DonkeyKong", "Link", "Samus", "DarkSamus", "Yoshi", "Kirby", "Fox", "Pikachu", "Luigi", "Ness", "CaptainFalcon",
-    "Jigglypuff", "Peach", "Daisy", "Bowser", "IceClimbers", "Shiek", "Zelda", "DrMario", "Pichu", "Falco", "Marth", "Lucina",
-    "YoungLink", "Ganondorf", "Mewtwo", "Roy", "Chrom", "GameAndWatch", "MetaKnight", "Pit", "DarkPit", "ZeroSuitSamus", "Wario", "Snake",
-    "Ike", "PokemonTrainer", "DiddyKong", "Lucas", "Sonic", "KingDeDeDe", "Olimar", "Lucario", "ROB", "ToonLink", "Wolf", "Villager",
-    "MegaMan", "WiiFitTrainer", "Rosalina", "LittleMac", "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",
-    "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", "Ridley", "Simon", "Richter", "KRool", "Isabelle", "Incineroar", "PiranhaPlant",
-    EMPTYSPOT, "Joker", "Hero", "BanjoKazooie", "Terry", "Byleth", "MinMin", "Steve", "Sephiroth", "Pyra", RANDOMSPOT, EMPTYSPOT
+    "Mario", "DonkeyKong", "Link", "Samus", "DarkSamus", "Yoshi", "Kirby", "Fox", "Pikachu", "Luigi", "Ness", "CaptainFalcon", "Jigglypuff", 
+    "Peach", "Daisy", "Bowser", "IceClimbers", "Shiek", "Zelda", "DrMario", "Pichu", "Falco", "Marth", "Lucina", "YoungLink", "Ganondorf", 
+    "Mewtwo", "Roy", "Chrom", "GameAndWatch", "MetaKnight", "Pit", "DarkPit", "ZeroSuitSamus", "Wario", "Snake", "Ike", "PokemonTrainer", "DiddyKong", 
+    "Lucas", "Sonic", "KingDeDeDe", "Olimar", "Lucario", "ROB", "ToonLink", "Wolf", "Villager", "MegaMan", "WiiFitTrainer", "Rosalina", "LittleMac", 
+    "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",  "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", 
+    "Ridley", "Simon", "Richter", "KRool", "Isabelle", "Incineroar", "PiranhaPlant", "Joker", "Hero", "BanjoKazooie", "Terry", "Byleth", "MinMin",
+    EMPTYSPOT, EMPTYSPOT, "Steve", "Sephiroth", "Pyra", "Kazuya", "Sora", EMPTYSPOT, EMPTYSPOT, EMPTYSPOT, RANDOMSPOT, EMPTYSPOT, EMPTYSPOT,
+    // "MiiBrawler", "MiiSword", "MiiGunner", RANDOMSPOT, EMPTYSPOT, EMPTYSPOT,
   ],
-  charactersPerRow: 12,
+  charactersPerRow: 13,
   characterBox: {
-    w: 144,
+    w: 140,
     h: 80,
   },
   cssBounds: {
@@ -31,8 +32,8 @@ const CONSTANTS = {
     height: 572,
   },
   cssCursorSpeedPer100Ms: {
-    x: 390 / 5,
-    y: 390 / 5, // ~450 on a 500ms scale.
+    x: 450 / 5,
+    y: 450 / 5, // ~450 on a 500ms scale.
     diagonalMultiplicator: 1.5, // found 275 distance when up+right.
   },
   bounds: {
@@ -57,6 +58,7 @@ class CharacterCursor {
 
   async calibrate() {
     await this.controller.hold(Inputs.DOWN).hold(Inputs.LEFT).forMilliseconds(3000).execute();
+    await waitFor(500);
   }
 
   async setAsCPU() {
@@ -66,6 +68,7 @@ class CharacterCursor {
       .andThen()
       .press(Inputs.A)
       .execute();
+    await waitFor(500);
   }
 
   async getToCharacter(character: string, color?: number) {
@@ -156,7 +159,7 @@ export class SmashUltimateControllers {
     await this.player1.press(Inputs.A).execute();
     await waitFor(1000);
     await this.player1.press(Inputs.A).execute();
-    await waitFor(2000);
+    await waitFor(5000);
   }
 
   async selectDefaultRuleset() {
@@ -165,13 +168,16 @@ export class SmashUltimateControllers {
   }
 
   async selectStage() {
-    await this.player1.press(Inputs.A).execute();
-    // Maybe test this with the image matcher
-    await waitFor(7000);
+    if (!IS_USING_REAL_SWITCH) {
+      await this.player1.press(Inputs.A).execute();
+      // Maybe test this with the image matcher
+      await waitFor(7000);
+    }
   }
 
   async moveJustABitToRegisterAsPlayersInCSS() {
     await this.player1
+      .hold(Inputs.B)
       .hold(Inputs.DOWN)
       .forMilliseconds(300)
       .andThen()
@@ -179,6 +185,7 @@ export class SmashUltimateControllers {
       .forMilliseconds(300)
       .execute();
     await this.player2
+      .hold(Inputs.B)
       .hold(Inputs.DOWN)
       .forMilliseconds(300)
       .andThen()
@@ -189,6 +196,7 @@ export class SmashUltimateControllers {
 
   async resetControllersPosition() {
     await Promise.all([this.player1CSSCursor.calibrate(), this.player2CSSCursor.calibrate()]);
+    await waitFor(500);
   }
 
   async setP1AsCPU() {
@@ -209,10 +217,10 @@ export class SmashUltimateControllers {
   }
 
   async justSelectCharacters(player1: string, player2: string) {
-    await Promise.all([
-      this.player1CSSCursor.getToCharacter(player1),
-      this.player2CSSCursor.getToCharacter(player2),
-    ]);
+    await this.player1CSSCursor.getToCharacter(player1);
+    await waitFor(500);
+    await this.player2CSSCursor.getToCharacter(player2);
+    await waitFor(500);
   }
 
   async startMatch() {
@@ -241,24 +249,27 @@ export class SmashUltimateControllers {
 let serialPort: SerialPort;
 const getPort = async () => {
   if (!serialPort) {
-  serialPort = new SerialPort("\\COM9", {baudRate:9600}, (err) => {
-    if (err) {
-      console.error(err);
-    } else {
-      console.log("Serial OK");
-    }
-  });
-  serialPort.on("error", (err) => console.error(err));
-} 
-return serialPort;
-}
+    serialPort = new SerialPort('\\COM9', { baudRate: 1000000 }, (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log('Serial OK');
+      }
+    });
+    serialPort.on('error', (err) => console.error(err));
+  }
+  return serialPort;
+};
 
 export const withController = async (
   handle: (controller: SmashUltimateControllers) => Promise<void>
 ) => {
- 
-  let player1 = IS_USING_REAL_SWITCH ? new SerialController(await getPort(), 1) : new VJoyController(1);
-  let player2 = IS_USING_REAL_SWITCH ? new SerialController(await getPort(), 2) : new VJoyController(2);
+  let player1 = IS_USING_REAL_SWITCH
+    ? new SerialController(await getPort(), 1)
+    : new VJoyController(1);
+  let player2 = IS_USING_REAL_SWITCH
+    ? new SerialController(await getPort(), 2)
+    : new VJoyController(2);
   try {
     player1.releaseAll();
     player2.releaseAll();
@@ -287,7 +298,9 @@ export const setInputs = async () => {
 
 const setInputsForPlayer = async (id: number) => {
   console.log(`Setting up player ${id}`);
-  let player: LowLevelController = IS_USING_REAL_SWITCH ? new SerialController(await getPort(), id) : new VJoyController(1);;
+  let player: LowLevelController = IS_USING_REAL_SWITCH
+    ? new SerialController(await getPort(), id)
+    : new VJoyController(1);
   try {
     const controller = new AsyncController(player);
     console.log('Pressing A in 1 sec');

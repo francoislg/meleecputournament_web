@@ -65,13 +65,11 @@ export class AsyncController implements Controller {
   async execute(): Promise<this> {
     this.queueCommandForCurrentInputs();
     this.regroupAllCurrentCommandsConcurrently();
-    await this.llc.releaseAll();
 
     for (let command of this.commandsToExecute) {
       await command.execute();
     }
 
-    await this.llc.releaseAll();
     this.commandsToExecute = [];
 
     return this;

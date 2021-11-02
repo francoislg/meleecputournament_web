@@ -1,4 +1,5 @@
 import readline from 'readline';
+import { IS_USING_REAL_SWITCH } from './args';
 import { readWindow, REFERENCES_FOLDER, WINDOW_SIZE } from './constants';
 import { getScreenSize, captureImage, Region, regionOffset } from './screencapture';
 import { randomCharacter, withController } from './smashultimatecontroller';
@@ -15,7 +16,8 @@ import {
   isMatchInProgress,
 } from './smashultimatestates';
 import { AppState, stateMatcher } from './states';
-import {YuzuCheck} from "./yuzu";
+import { captureSwitchImage } from './switchscreencapture';
+import { YuzuCheck } from './yuzu';
 
 //const FULL_SCREEN_FILE = `${REFERENCES_FOLDER}/fullscreen.png`;
 const WINDOW_FILE = `${REFERENCES_FOLDER}/window.png`;
@@ -24,22 +26,31 @@ export const setup = async () => {
   console.log('Starting the setup, booting the game.');
 
   await withController(async (ult) => {
-    const yuzu = new YuzuCheck(ult);
-    await yuzu.boot();
+    if (!IS_USING_REAL_SWITCH) {
+      const yuzu = new YuzuCheck(ult);
+      await yuzu.boot();
+    }
 
     const screen = getScreenSize();
     console.log('Screen size:', screen);
 
     const captureAndSave = async (region: Region, fileName: string) => {
-      const image = await captureImage(region);
-      await image.save(fileName);
+      if (IS_USING_REAL_SWITCH) {
+        const image = await captureSwitchImage();
+        await image.getRegion(region).save(fileName);
+      } else {
+        const image = await captureImage(region);
+        await image.save(fileName);
+      }
     };
 
     const windowOffset = await readWindow();
-    const windowUpdate = async () =>
+    const windowUpdate = async () => {
       await captureAndSave({ x: windowOffset.x, y: windowOffset.y, ...WINDOW_SIZE }, WINDOW_FILE);
+    };
+    console.log('Capturing window');
     await windowUpdate();
-      /*
+    /*
     do {
       await captureAndSave({ x: 0, y: 0, w: screen.width, h: screen.height }, FULL_SCREEN_FILE);
 
@@ -55,16 +66,39 @@ export const setup = async () => {
         `Do you want to update all the menu references? Ensure that your game is freshly booted.`
       )
     ) {
-      const referencesToGet: [AppState, string, OnReferenceFinish][] = [
-        [mainMenu, 'Press enter when you are on the main menu', () => ult.getToRuleSetFromStart()],
-        [ruleset, 'Press enter when you are in the rule sets', () => ult.selectDefaultRuleset()],
-        [
-          stageSelection,
-          'Press enter when you are on the stage selection screen',
-          () => ult.selectStage(),
-        ],
-        [css, 'Press enter when you are on character selection screen', () => ult.setAsCPU()],
-      ];
+      const referencesToGet: [AppState, string, OnReferenceFinish][] = IS_USING_REAL_SWITCH
+        ? [
+           [
+              mainMenu,
+              'Press enter when you are on the main menu',
+              () => ult.getToRuleSetFromStart(),
+            ],
+            [
+              ruleset,
+              'Press enter when you are in the rule sets',
+              () => ult.selectDefaultRuleset(),
+            ],
+            [css, 'Press if the controllers are properly synced', () => ult.moveJustABitToRegisterAsPlayersInCSS()],
+            [css, 'Press enter when you are on character selection screen', () => ult.setAsCPU()],
+          ]
+        : [
+            [
+              mainMenu,
+              'Press enter when you are on the main menu',
+              () => ult.getToRuleSetFromStart(),
+            ],
+            [
+              ruleset,
+              'Press enter when you are in the rule sets',
+              () => ult.selectDefaultRuleset(),
+            ],
+            [
+              stageSelection,
+              'Press enter when you are on the stage selection screen',
+              () => ult.selectStage(),
+            ],
+            [css, 'Press enter when you are on character selection screen', () => ult.setAsCPU()],
+          ];
 
       for (let [state, q, onFinish] of referencesToGet) {
         await question(q);
@@ -104,12 +138,16 @@ export const setup = async () => {
         console.log('Restarting from Main Menu Selection');
         await ult.getToRuleSetFromStart();
         await ult.selectDefaultRuleset();
-        await ult.selectStage();
+        if (IS_USING_REAL_SWITCH) {
+          await ult.selectStage();
+        }
       } else if (await match(ruleset)) {
         console.log('Restarting from Ruleset');
         await ult.selectDefaultRuleset();
-        await ult.selectStage();
-      } else if (await match(stageSelection)) {
+        if (IS_USING_REAL_SWITCH) {
+          await ult.selectStage();
+        }
+      } else if (!IS_USING_REAL_SWITCH && (await match(stageSelection))) {
         console.log('Restarting from Stage Selection');
         await ult.selectStage();
       } else if (await match(css)) {
@@ -130,7 +168,10 @@ export const setup = async () => {
 
       if (!isAlreadyOnWin) {
         if (!(await match(isPlayerOneACPU))) {
-          await ult.setAsCPU();
+          await ult.setP1AsCPU();
+        }
+        if (!(await match(isPlayerTwoACPU))) {
+          await ult.setP2AsCPU();
         }
 
         await ult.selectCharactersAndStart(randomCharacter(), randomCharacter());
@@ -142,7 +183,11 @@ export const setup = async () => {
         );
 
         await ult.pressAOnTheWinScreen();
-      } else if (await yesnoQuestion(`Are you in the first victory screen where you can't see the winner positions yet?`)) {
+      } else if (
+        await yesnoQuestion(
+          `Are you in the first victory screen where you can't see the winner positions yet?`
+        )
+      ) {
         await captureAndSave(
           regionOffset(windowOffset, isMatchOver.region),
           isMatchOver.referenceFile

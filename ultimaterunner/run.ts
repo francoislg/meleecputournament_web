@@ -5,6 +5,7 @@ import { io } from 'socket.io-client';
 
 import type { MatchResponseMessage } from '../server/pc-server';
 import type { MatchMessage } from '../server/tournament-commands';
+import { IS_USING_REAL_SWITCH } from './args';
 
 const SECRET_PC_KEY = 'zunHp5gte9kBVUiqzXYw33eN3po78L';
 
@@ -58,20 +59,24 @@ export const runWithServer = async () => {
   });
 
   await withController(async (ult) => {
-    const yuzu = new YuzuCheck(ult);
 
-    await yuzu.boot();
-    console.log("Booted!");
-    await yuzu.tick();
+    const yuzu = new YuzuCheck(ult);
+    if (!IS_USING_REAL_SWITCH) {
+      await yuzu.boot();
+      console.log("Booted!");
+      await yuzu.tick();
+    }
 
     while (1) {
       const app = new SmashApp(ult);
 
       const { readyForMatch, playerWon, matchInProgress, nextDelay } = await app.tick();
 
-      // Do not test for Yuzu if the match is ready to start, otherwise it will detect a freeze while waiting for the start signal.
-      if (!readyForMatch || startCurrentMatch) {
-        await yuzu.tick();
+      if (!IS_USING_REAL_SWITCH) {
+        // Do not test for Yuzu if the match is ready to start, otherwise it will detect a freeze while waiting for the start signal.
+        if (!readyForMatch || startCurrentMatch) {
+          await yuzu.tick();
+        }
       }
 
       if (readyForMatch) {

@@ -109,6 +109,8 @@ export const CHARACTERS = [
   "Steve",
   "Sephiroth",
   "Pyra",
+  "Kazuya",
+  "Sora"
 ] as const;
 
 type AllCharacters = typeof CHARACTERS[number];
@@ -172,6 +174,7 @@ const characterDefs: Record<AllCharacters, CharDef> = {
     aliases: ["Jigglypuff", "Puff"],
   },
   Joker: {},
+  Kazuya: {},
   KRool: {
     aliases: ["King K. Rool", "K. Rool"],
   },
@@ -243,6 +246,7 @@ const characterDefs: Record<AllCharacters, CharDef> = {
   Sonic: {
     aliases: ["Sonic", "Sanic"],
   },
+  Sora: {},
   Steve: {},
   Terry: {},
   ToonLink: {

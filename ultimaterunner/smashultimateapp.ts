@@ -1,3 +1,4 @@
+import { IS_USING_REAL_SWITCH } from './args';
 import { REFERENCES_FOLDER } from './constants';
 import { SmashUltimateControllers } from './smashultimatecontroller';
 import {
@@ -47,7 +48,7 @@ const withMatchEither = (match: ReturnType<typeof stateMatcher>['match']) => {
         REFERENCES_FOLDER + ' blackbars'
       ),
     }));
-  return matcher;
+  return IS_USING_REAL_SWITCH ? match : matcher;
 };
 
 export class SmashApp {
@@ -179,7 +180,7 @@ export class SmashApp {
       return SmashState.MAIN_MENU;
     } else if (await match(ruleset)) {
       return SmashState.RULESET;
-    } else if (await match(stageSelection)) {
+    } else if (!IS_USING_REAL_SWITCH && await match(stageSelection)) {
       return SmashState.STAGE_SELECTION;
     } else if (await match(css)) {
       return SmashState.CSS;

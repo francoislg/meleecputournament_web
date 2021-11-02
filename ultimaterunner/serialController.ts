@@ -4,7 +4,7 @@ import { Inputs, LowLevelController } from './controller';
 export class SerialController implements LowLevelController {
   constructor(private port: SerialPort, private player: number) {
     if (player > 2) {
-      throw new Error("This protocol only supports 2 players.");
+      throw new Error('This protocol only supports 2 players.');
     }
   }
 
@@ -15,24 +15,35 @@ export class SerialController implements LowLevelController {
   }
 
   hold(input: Inputs): this {
-    const button = this.buttonToId(input);
-    if (button) {
-      this.port.write(button + "+" + "\n");
-    }
+    this.send([input], true);
     return this;
   }
 
   release(input: Inputs): this {
-    const button = this.buttonToId(input);
-    if (button) {
-      this.port.write(button + "-" + "\n");
-    }
+    this.send([input], false);
     return this;
   }
 
   releaseAll(): this {
-    this.port.write("c"+ "\n");
+    this.send([
+      Inputs.A,
+      Inputs.B,
+      Inputs.L,
+      Inputs.START,
+      Inputs.UP,
+      Inputs.DOWN,
+      Inputs.LEFT,
+      Inputs.RIGHT,
+    ], false);
     return this;
+  }
+
+  private send(buttons: Inputs[], on: boolean) {
+    const commands = buttons
+      .map((button) => this.buttonToId(button))
+      .filter(b => b !== null)
+      .map((id) => `${id}${on ? '+' : '-'}`);
+      this.port.write(commands.join(",") + "\n")
   }
 
   private buttonToId(input: Inputs): number | null {
@@ -45,17 +56,18 @@ export class SerialController implements LowLevelController {
         case Inputs.L:
           return 2;
         case Inputs.START:
-          return 3;
+          // TODO: Workaround for now, it seems to work with this one
+          return 13;
         case Inputs.UP:
           return 6;
         case Inputs.DOWN:
           return 7;
-          case Inputs.LEFT:
-            return 8;
-            case Inputs.RIGHT:
+        case Inputs.LEFT:
+          return 8;
+        case Inputs.RIGHT:
           return 9;
         default:
-        return null;
+          return null;
       }
     } else {
       // Player 2
@@ -72,14 +84,13 @@ export class SerialController implements LowLevelController {
           return 14;
         case Inputs.DOWN:
           return 15;
-          case Inputs.LEFT:
-            return 16;
-            case Inputs.RIGHT:
+        case Inputs.LEFT:
+          return 16;
+        case Inputs.RIGHT:
           return 17;
         default:
-        return null;
+          return null;
       }
     }
-    
   }
 }

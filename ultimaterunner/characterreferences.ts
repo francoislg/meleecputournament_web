@@ -22,7 +22,7 @@ export const player2Pick = {
   },
 };
 
-export const CHARACTERS_IMAGE_MATCHING_TOLERANCE = 0.02;
+export const CHARACTERS_IMAGE_MATCHING_TOLERANCE = 0.05;
 
 export const characterReferenceFile = (characterName: string) =>
   `${CHARACTERS_FOLDER}/${characterName}.png`;

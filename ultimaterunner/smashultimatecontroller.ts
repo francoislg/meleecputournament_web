@@ -247,6 +247,10 @@ export class SmashUltimateControllers {
     await this.player1.press(Inputs.START).execute();
   }
 
+  async tryStartMatchWithPlayer2() {
+    await this.player2.press(Inputs.START).execute();
+  }
+
   async selectCharactersAndStart(player1: string, player2: string) {
     await this.justSelectCharacters(player1, player2);
     await this.startMatch();

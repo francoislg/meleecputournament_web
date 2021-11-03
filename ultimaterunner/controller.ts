@@ -37,7 +37,7 @@ interface Command {
 }
 
 export class AsyncController implements Controller {
-  private pressTime = 50;
+  private pressTime = 100;
   private timeBetweenCommands = 20;
 
   private currentInputGroup: Inputs[] = [];

@@ -125,7 +125,7 @@ export const runWithServer = async () => {
             await ult.selectPlayer1Character(currentMatch.first.character);
             await waitFor(500);
             if (await checkCharacterPick(currentMatch.first.character, player1Pick.region)) {
-              ult.setPlayer1Color();
+              await ult.setPlayer1Color();
             } else {
               isP1Selected = false;
             }
@@ -135,7 +135,7 @@ export const runWithServer = async () => {
             await ult.selectPlayer2Character(currentMatch.second.character);
             await waitFor(500);
             if (await checkCharacterPick(currentMatch.second.character, player2Pick.region)) {
-              ult.setPlayer2Color();
+              await ult.setPlayer2Color();
             } else {
               isP2Selected = false;
             }
@@ -143,7 +143,15 @@ export const runWithServer = async () => {
           if (!isP1Selected || !isP2Selected) {
             console.log("Character selection was nulled, waiting another tick.")
           } else if (startCurrentMatch) {
+            console.log("Starting match");
             await ult.startMatch();
+            await waitFor(2000);
+            
+            // Somehow, the `startMatch` failed once when done by player 1, so let's just try p2, just to be sure.
+            const { readyForMatch: firstReadyForMatch } = await app.tick();
+            if (firstReadyForMatch) {
+              await ult.tryStartMatchWithPlayer2();
+            }
             await waitFor(2000);
             // Failsafe if the match didn't start for some reason.
             const { readyForMatch } = await app.tick();

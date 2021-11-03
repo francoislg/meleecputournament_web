@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { writeFile } from "fs/promises";
 
-const updateBots = async () => {
+export const updateBots = async () => {
   try {
     const res = await fetch("https://api.twitchinsights.net/v1/bots/online");
     const {bots, _total} = await res.json();
@@ -9,6 +9,7 @@ const updateBots = async () => {
     if (_total > 0) {
       const data = bots.map(([name, something, id]) => name);
       await writeFile("./onlinebots.json", JSON.stringify(data, null, 2));
+      return data;
     }
   } catch (err) {
     console.error("Could not update bots, but meh", err);

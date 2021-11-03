@@ -124,7 +124,9 @@ export const runWithServer = async () => {
             isP1Selected = true;
             await ult.selectPlayer1Character(currentMatch.first.character);
             await waitFor(500);
-            if (!await checkCharacterPick(currentMatch.first.character, player1Pick.region)) {
+            if (await checkCharacterPick(currentMatch.first.character, player1Pick.region)) {
+              ult.setPlayer1Color();
+            } else {
               isP1Selected = false;
             }
           }
@@ -132,7 +134,9 @@ export const runWithServer = async () => {
             isP2Selected = true;
             await ult.selectPlayer2Character(currentMatch.second.character);
             await waitFor(500);
-            if (!await checkCharacterPick(currentMatch.second.character, player2Pick.region)) {
+            if (await checkCharacterPick(currentMatch.second.character, player2Pick.region)) {
+              ult.setPlayer2Color();
+            } else {
               isP2Selected = false;
             }
           }

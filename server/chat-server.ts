@@ -1,7 +1,7 @@
 import { CHARACTERS } from "./constants";
 import { BetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
-import { IUserModel, UserModel } from "./models/User";
+import { UserModel } from "./models/User";
 import { OverlayServer } from "./overlay-server";
 import {
   FAKE_TOURNAMENT_ID,
@@ -16,20 +16,7 @@ import {
 import * as ONLINEBOTS from "./onlinebots.json";
 import * as TOPBOTS from "./top100bots.json";
 import { writeFile } from "fs/promises";
-
-const updateBots = async () => {
-  try {
-    const res = await fetch("https://api.twitchinsights.net/v1/bots/online");
-    const bots = await res.json();
-    if (bots.length > 0) {
-      const data = bots.bots.map(([name, something, id]) => name);
-      await writeFile("./onlinebots.json", JSON.stringify(data));
-      return data;
-    }
-  } catch (err) {
-    console.error("Could not update bots, but meh", err);
-  }
-}
+import { updateBots } from "./updatebots";
 
 const knownBots = [
   "shadowy_stix",

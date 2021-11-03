@@ -230,14 +230,17 @@ export class SmashUltimateControllers {
     await waitFor(500);
   }
 
+  async setPlayer1Color(color?: number) {
+    await this.player1CSSCursor.selectColor(color);
+  }
+
+  async setPlayer2Color(color?: number) {
+    await this.player2CSSCursor.selectColor(color);
+  }
+
   async justSelectCharacters(player1: string, player2: string) {
     await this.selectPlayer1Character(player1);
     await this.selectPlayer2Character(player2);
-  }
-
-  async selectColors() {
-    await this.player1CSSCursor.selectColor();
-    await this.player2CSSCursor.selectColor();
   }
 
   async startMatch() {

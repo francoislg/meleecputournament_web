@@ -1,8 +1,5 @@
-import { CHARACTERS_FOLDER, REFERENCES_FOLDER } from './constants';
+import { REFERENCES_FOLDER } from './constants';
 import { AppState } from './states';
-import { access } from 'fs/promises';
-import Jimp from 'jimp';
-import { Image } from './screencapture';
 
 export const mainMenu: AppState = {
   description: 'The main menu, with the Smash, Spirits, Vault, etc...',
@@ -112,42 +109,4 @@ export const didPlayer2Win: AppState = {
     w: 50,
     h: 10,
   },
-};
-
-// Those two should really really match
-export const player1Pick = {
-  region: {
-    x: 549,
-    y: 856,
-    w: 300,
-    h: 10,
-  },
-};
-
-export const player2Pick = {
-  region: {
-    x: 1464,
-    y: 856,
-    w: 300,
-    h: 10,
-  },
-};
-
-export const characterReferenceFile = (characterName: string) => `${CHARACTERS_FOLDER}/${characterName}.png`; 
-
-export const getCharacterImageIfExist = async (characterName: string) => {
-  if (await hasCharacterImage(characterName)) {
-    return new Image(await Jimp.read(characterReferenceFile(characterName)));
-  }
-  return null;
-};
-
-
-export const hasCharacterImage = async (characterName: string) => {
-  try {
-    await access(characterReferenceFile(characterName));
-    return true;
-  } catch {
-    return false;
-  }
 };

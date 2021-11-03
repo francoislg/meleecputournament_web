@@ -9,10 +9,12 @@ import { IS_USING_REAL_SWITCH } from './args';
 import { capture } from './states';
 import {
   characterReferenceFile,
+  CHARACTERS_IMAGE_MATCHING_TOLERANCE,
   getCharacterImageIfExist,
   player1Pick,
   player2Pick,
-} from './smashultimatestates';
+  whichCharacter
+} from "./characterreferences";
 import { importantLog } from './log';
 import { Image, Region } from './screencapture';
 
@@ -71,11 +73,10 @@ export const runWithServer = async () => {
     const referenceImage = await getCharacterImageIfExist(characterName);
     const toCheck = image.getRegion(region);
     if (referenceImage) {
-      if (referenceImage.isMatching(toCheck, 0.05)) {
-        importantLog(characterName + ' matches');
-      } else {
-        importantLog(characterName + " doesn't matches");
-        await toCheck.save(characterReferenceFile(characterName + '_tocompare'));
+      if (!referenceImage.isMatching(toCheck, CHARACTERS_IMAGE_MATCHING_TOLERANCE))  {
+        const mightBe = await whichCharacter(referenceImage);
+        importantLog(characterName + " doesn't matches, could be any of: " + mightBe.join(","));
+        await toCheck.save(characterReferenceFile(characterName + '_or_' + mightBe.join("_or_")));
       }
     } else {
       console.log('Taking pick for', characterName);

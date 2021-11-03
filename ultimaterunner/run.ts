@@ -74,13 +74,22 @@ export const runWithServer = async () => {
     const toCheck = image.getRegion(region);
     if (referenceImage) {
       if (!referenceImage.isMatching(toCheck, CHARACTERS_IMAGE_MATCHING_TOLERANCE))  {
-        const mightBe = await whichCharacter(referenceImage);
-        importantLog(characterName + " doesn't matches, could be any of: " + mightBe.join(","));
-        await toCheck.save(characterReferenceFile(characterName + '_or_' + mightBe.join("_or_")));
+        const mightBe = await whichCharacter(toCheck);
+        if (mightBe.length === 1) {
+          console.log("Reseting picks because it might have an exact match");
+          charactersSelected = false;
+        } else {
+          importantLog(characterName + " doesn't matches, could be any of: " + mightBe.join(","));
+          await toCheck.save(characterReferenceFile(characterName + '_or_' + mightBe.slice(0, 2).join("_or_")));
+        }
       }
     } else {
-      console.log('Taking pick for', characterName);
-      await toCheck.save(characterReferenceFile(characterName));
+      const mightBe = await whichCharacter(toCheck);
+      if (mightBe.length === 0) {
+        await toCheck.save(characterReferenceFile(characterName));
+      } else {
+        importantLog(characterName + " was picked but could be: " + mightBe.join(","));
+      }
     }
   };
 
@@ -120,7 +129,9 @@ export const runWithServer = async () => {
 
             await ult.selectColors();
           }
-          if (startCurrentMatch) {
+          if (!charactersSelected) {
+            console.log("Character selection was nulled, waiting another tick.")
+          } else if (startCurrentMatch) {
             await ult.startMatch();
             await waitFor(2000);
             // Failsafe if the match didn't start for some reason.

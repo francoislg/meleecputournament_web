@@ -23,7 +23,7 @@ const CONSTANTS = {
   charactersPerRow: 13,
   characterBox: {
     w: 135,
-    h: 80,
+    h: 78,
   },
   cssBounds: {
     x: 30,
@@ -33,7 +33,7 @@ const CONSTANTS = {
   },
   cssCursorSpeedPer100Ms: {
     x: 450 / 5,
-    y: 470 / 5, // ~450 on a 500ms scale.
+    y: 460 / 5, // ~450 on a 500ms scale.
     diagonalMultiplicator: 1.5, // found 275 distance when up+right.
   },
   bounds: {
@@ -220,11 +220,19 @@ export class SmashUltimateControllers {
     await Promise.all([this.player1CSSCursor.setAsCPU(), this.player2CSSCursor.setAsCPU()]);
   }
 
-  async justSelectCharacters(player1: string, player2: string) {
+  async selectPlayer1Character(player1: string) {
     await this.player1CSSCursor.getToCharacter(player1);
     await waitFor(500);
+  }
+
+  async selectPlayer2Character(player2: string) {
     await this.player2CSSCursor.getToCharacter(player2);
     await waitFor(500);
+  }
+
+  async justSelectCharacters(player1: string, player2: string) {
+    await this.selectPlayer1Character(player1);
+    await this.selectPlayer2Character(player2);
   }
 
   async selectColors() {

@@ -24,6 +24,7 @@ const updateBots = async () => {
     if (bots.length > 0) {
       const data = bots.bots.map(([name, something, id]) => name);
       await writeFile("./onlinebots.json", JSON.stringify(data));
+      return data;
     }
   } catch (err) {
     console.error("Could not update bots, but meh", err);
@@ -53,7 +54,12 @@ const knownBots = [
   "sad_grl",
   "servres",
 ];
-const JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
+let JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
+setInterval(async () => {
+  const newOnlineBots = await updateBots();
+  JOIN_BLACKLIST = [...newOnlineBots, ...TOPBOTS, ...knownBots]
+}, 1000 * 60 * 60)
+
 
 // tmi.js doc: https://github.com/tmijs/docs/blob/gh-pages/_posts
 const tmi = require("tmi.js");

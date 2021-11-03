@@ -16,7 +16,7 @@ import {
   whichCharacter
 } from "./characterreferences";
 import { importantLog } from './log';
-import { Image, Region } from './screencapture';
+import { Region } from './screencapture';
 
 const SECRET_PC_KEY = 'zunHp5gte9kBVUiqzXYw33eN3po78L';
 
@@ -26,7 +26,8 @@ export const runWithServer = async () => {
 
   let currentMatch: MatchMessage | null;
   let startCurrentMatch: boolean;
-  let charactersSelected: boolean;
+  let isP1Selected: boolean;
+  let isP2Selected: boolean;
   let bufferedWinner: number | null;
 
   socket.on('match', async (match: MatchMessage) => {
@@ -46,7 +47,8 @@ export const runWithServer = async () => {
   const askForReemit = () => {
     console.log('Asking to re emit match');
     socket.emit('reemitlast');
-    charactersSelected = false;
+    isP1Selected = false;
+    isP2Selected = false;
   };
 
   const reportWinner = (player: number, match: MatchMessage) => {
@@ -60,7 +62,8 @@ export const runWithServer = async () => {
     socket.emit('winner', response);
     currentMatch = null;
     bufferedWinner = null;
-    charactersSelected = false;
+    isP1Selected = false;
+    isP2Selected = false;
     startCurrentMatch = false;
   };
 
@@ -69,7 +72,8 @@ export const runWithServer = async () => {
     IS_RECONNECTING = true;
   });
 
-  const checkCharacterPick = async (image: Image, characterName: string, region: Region) => {
+  const checkCharacterPick = async (characterName: string, region: Region) => {
+    const image = await capture();
     const referenceImage = await getCharacterImageIfExist(characterName);
     const toCheck = image.getRegion(region);
     if (referenceImage) {
@@ -77,7 +81,7 @@ export const runWithServer = async () => {
         const mightBe = await whichCharacter(toCheck);
         if (mightBe.length === 1) {
           console.log("Reseting picks because it might have an exact match");
-          charactersSelected = false;
+          return false;
         } else {
           importantLog(characterName + " doesn't matches, could be any of: " + mightBe.join(","));
           await toCheck.save(characterReferenceFile(characterName + '_or_' + mightBe.slice(0, 2).join("_or_")));
@@ -91,6 +95,7 @@ export const runWithServer = async () => {
         importantLog(characterName + " was picked but could be: " + mightBe.join(","));
       }
     }
+    return true;
   };
 
   await withController(async (ult) => {
@@ -115,21 +120,23 @@ export const runWithServer = async () => {
 
       if (readyForMatch) {
         if (!!currentMatch) {
-          if (!charactersSelected) {
-            charactersSelected = true;
-            await ult.justSelectCharacters(
-              currentMatch.first.character,
-              currentMatch.second.character
-            );
+          if (!isP1Selected) {
+            isP1Selected = true;
+            await ult.selectPlayer1Character(currentMatch.first.character);
             await waitFor(500);
-            // This should collect the character pick, could be used later on to validate the actual pick.
-            const image = await capture();
-            await checkCharacterPick(image, currentMatch.first.character, player1Pick.region);
-            await checkCharacterPick(image, currentMatch.second.character, player2Pick.region);
-
-            await ult.selectColors();
+            if (!await checkCharacterPick(currentMatch.first.character, player1Pick.region)) {
+              isP1Selected = false;
+            }
           }
-          if (!charactersSelected) {
+          if (!isP2Selected) {
+            isP2Selected = true;
+            await ult.selectPlayer2Character(currentMatch.second.character);
+            await waitFor(500);
+            if (!await checkCharacterPick(currentMatch.second.character, player2Pick.region)) {
+              isP2Selected = false;
+            }
+          }
+          if (!isP1Selected || !isP2Selected) {
             console.log("Character selection was nulled, waiting another tick.")
           } else if (startCurrentMatch) {
             await ult.startMatch();
@@ -140,7 +147,8 @@ export const runWithServer = async () => {
               console.log(
                 "Resetting the character selection, looks like it didn't start the match"
               );
-              charactersSelected = false;
+              isP1Selected = false;
+              isP2Selected = false;
             }
           } else {
             console.log('Server did not send the OK');

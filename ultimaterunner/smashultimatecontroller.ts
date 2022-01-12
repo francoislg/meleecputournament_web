@@ -147,9 +147,24 @@ class CharacterCursor {
 export class SmashUltimateControllers {
   private player1CSSCursor: CharacterCursor;
   private player2CSSCursor: CharacterCursor;
+  public controllers: {
+    player1: AsyncController,
+    player2: AsyncController,
+  };
   constructor(private player1: AsyncController, private player2: AsyncController) {
     this.player1CSSCursor = new CharacterCursor(player1, 1);
     this.player2CSSCursor = new CharacterCursor(player2, 2);
+    this.controllers = {
+      player1,
+      player2,
+    }
+  }
+
+  async connect() {
+    await this.player1.press(Inputs.L).press(Inputs.R).execute();
+    await waitFor(2000);
+    await this.player2.press(Inputs.L).press(Inputs.R).execute();
+    await waitFor(2000);
   }
 
   async startTheGame() {
@@ -273,7 +288,7 @@ export class SmashUltimateControllers {
 let serialPort: SerialPort;
 const getPort = async () => {
   if (!serialPort) {
-    serialPort = new SerialPort('\\COM9', { baudRate: 1000000 }, (err) => {
+    serialPort = new SerialPort('\\COM3', { baudRate: 1000000 }, (err) => {
       if (err) {
         console.error(err);
       } else {
@@ -329,8 +344,10 @@ const setInputsForPlayer = async (id: number) => {
     const controller = new AsyncController(player);
     console.log('Pressing A in 1 sec');
     await controller.wait(1000).andThen().press(Inputs.A).execute();
-    console.log('Pressing B in 2 sec');
-    await controller.wait(2000).andThen().press(Inputs.B).execute();
+    if (!IS_USING_REAL_SWITCH) {
+      console.log('Pressing B in 2 sec');
+      await controller.wait(2000).andThen().press(Inputs.B).execute();
+    }
     console.log('Pressing L in 2 sec');
     await controller.wait(1000).andThen().press(Inputs.L).execute();
     console.log('Pressing R in 2 sec');

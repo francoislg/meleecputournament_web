@@ -1,7 +1,9 @@
 {
   "scripts": {
     "setupinputs": "ts-node index.ts --setupinputs",
-    "standalone": "ts-node index.ts --standalone",
+    "sync": "ts-node index.ts --setupinputs --realswitch",
+    "standalone": "ts-node index.ts --standalone --realswitch",
+    "unlock": "ts-node index.ts --unlock --realswitch",
     "setup": "ts-node index.ts --setup",
     "start": "ts-node index.ts",
     "dev": "ts-node-dev index.ts"

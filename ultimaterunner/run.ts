@@ -106,6 +106,8 @@ export const runWithServer = async () => {
       await yuzu.tick();
     }
 
+    let ticksInProgress = 0;
+
     while (1) {
       const app = new SmashApp(ult);
 
@@ -174,9 +176,16 @@ export const runWithServer = async () => {
       }
 
       if (matchInProgress) {
+        // A little something to prevent the switch from going into sleep mode.
+        ticksInProgress++;
+        if (ticksInProgress % 10 === 9) {
+          await ult.moveJustABitToRegisterAsPlayersInCSS();
+        }
         if (!currentMatch) {
           askForReemit();
         }
+      } else {
+        ticksInProgress = 0;
       }
 
       if (playerWon) {

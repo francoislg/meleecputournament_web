@@ -68,7 +68,7 @@ export const setup = async () => {
     ) {
       const referencesToGet: [AppState, string, OnReferenceFinish][] = IS_USING_REAL_SWITCH
         ? [
-           [
+            [
               mainMenu,
               'Press enter when you are on the main menu',
               () => ult.getToRuleSetFromStart(),
@@ -78,7 +78,11 @@ export const setup = async () => {
               'Press enter when you are in the rule sets',
               () => ult.selectDefaultRuleset(),
             ],
-            [css, 'Press if the controllers are properly synced', () => ult.moveJustABitToRegisterAsPlayersInCSS()],
+            [
+              css,
+              'Press if the controllers are properly synced',
+              () => ult.moveJustABitToRegisterAsPlayersInCSS(),
+            ],
             [css, 'Press enter when you are on character selection screen', () => ult.setAsCPU()],
           ]
         : [
@@ -228,6 +232,15 @@ export const setup = async () => {
       } while (!done);
     }
   });
+};
+
+export const connect = async () => {
+  do {
+    console.log('Connecting');
+    await withController(async (ult) => {
+      await ult.connect();
+    });
+  } while (!(await yesnoQuestion('Are you ready to get into Smash?')));
 };
 
 const yesnoQuestion = async (q: string) => {

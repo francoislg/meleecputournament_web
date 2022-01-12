@@ -271,7 +271,7 @@ export const createNewTournament = async () => {
     tournament: {
       name: `Ultimate CPU Tournament #${count}`,
       description:
-        "An automated tournament, see https://www.twitch.tv/autotournaments",
+        "An automated tournament, see https://www.twitch.tv/supersmashbotsshowdown",
       url: `ultimatecputournament_test${count}`,
     },
   });

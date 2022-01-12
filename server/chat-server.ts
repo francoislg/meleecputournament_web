@@ -51,8 +51,8 @@ setInterval(async () => {
 // tmi.js doc: https://github.com/tmijs/docs/blob/gh-pages/_posts
 const tmi = require("tmi.js");
 
-const BOT_USERNAME = "autotournaments";
-const CHANNEL_NAME = "autotournaments";
+const BOT_USERNAME = "supersmashbotsshowdown";
+const CHANNEL_NAME = "supersmashbotsshowdown";
 const OAUTH_TOKEN = process.env.AT_TWITCH_OAUTH_TOKEN;
 
 const JOIN_MESSAGE_ENABLED = true;

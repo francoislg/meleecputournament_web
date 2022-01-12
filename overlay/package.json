@@ -2,10 +2,10 @@
 	"name": "overlay",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "svelte-kit dev",
+		"dev": "svelte-kit dev --port 3156",
 		"build": "svelte-kit build",
-		"preview": "svelte-kit preview",
-		"buildpreview": "svelte-kit build && svelte-kit preview",
+		"preview": "svelte-kit preview --port 3156",
+		"buildpreview": "svelte-kit build && svelte-kit preview --port 3156",
 		"lint": "prettier --check .",
 		"format": "prettier --write ."
 	},

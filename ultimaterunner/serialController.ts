@@ -6,6 +6,7 @@ export class SerialController implements LowLevelController {
     if (player > 2) {
       throw new Error('This protocol only supports 2 players.');
     }
+    this.port.write("r\n");
   }
 
   free() {
@@ -29,6 +30,7 @@ export class SerialController implements LowLevelController {
       Inputs.A,
       Inputs.B,
       Inputs.L,
+      Inputs.R,
       Inputs.START,
       Inputs.UP,
       Inputs.DOWN,

@@ -11,8 +11,11 @@ const args = process.argv.slice(2);
 const hasFlag = (flag: string) => args.indexOf(flag) !== -1;
 
 const start = async () => {
-  if (hasFlag('--withconnect')) {
+  if (hasFlag('--withconnect') || hasFlag('--onlyconnect')) {
     await connect();
+    if (hasFlag("--onlyconnect")) {
+      return;
+    }
   }
 
   if (hasFlag('--setup')) {

@@ -272,16 +272,22 @@ export const createNewTournament = async () => {
       name: `Ultimate CPU Tournament #${count}`,
       description:
         "An automated tournament, see https://www.twitch.tv/supersmashbotsshowdown",
-      url: `ultimatecputournament_test${count}`,
+      url: `ultimatecputournament_${count}`,
     },
   });
   const tournamentId = created.tournament.id.toString();
+  const name = created.tournament.name;
+  const url = created.tournament.url.toString();
 
   const newOne = new TournamentModel();
   newOne.tournamentId = tournamentId;
   newOne.inProgress = true;
   await newOne.save();
-  return tournamentId;
+  return {
+    tournamentId,
+    name,
+    url,
+  };
 };
 export const addParticipants = async (tournamentId: string) => {
   console.log(`Adding participants for ${tournamentId}`);
@@ -354,17 +360,19 @@ export const finishTournament = async (tournamentId: string) => {
 export const givePointsToWinner = async (tournamentId: string) => {
   const awards = [];
   try {
-    const participants = await ParticipantAdapter.index(
+    const badlyTypedParticipants = await ParticipantAdapter.index(
       CHALLONGE_API_KEY,
       tournamentId
     );
-    const winner = participants.participants.find(
+    const participants = badlyTypedParticipants.participants.map(p => (p as any).participant as typeof p);
+    const winner = participants.find(
       (participant) => participant.final_rank === 1
     );
     const entry = await EntryModel.findById(winner.misc);
     if (entry) {
       if (entry.userId) {
-        await TournamentModel.updateOne(
+        console.log(`TOURNAMENT RESULT: Setting ${entry.userId} as the tournament winner`)
+        await TournamentModel.findOneAndUpdate(
           {
             tournamentId,
           },

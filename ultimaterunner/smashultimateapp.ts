@@ -12,6 +12,9 @@ import {
   didPlayer2Win,
   isMatchInProgress,
   isPlayerTwoACPU,
+  cssTournament,
+  cssStream,
+  cssClean,
 } from './smashultimatestates';
 import { stateMatcher } from './states';
 
@@ -110,7 +113,7 @@ export class SmashApp {
     let tries = 0;
 
     await capture();
-    if (!await matchEither(css)) {
+    if (!(await this.matchAnyCss(matchEither))) {
       console.log("Doesn't match CSS, returning");
       return false;
     }
@@ -133,7 +136,7 @@ export class SmashApp {
 
       await capture();
 
-      if (!await matchEither(css)) {
+      if (!(await this.matchAnyCss(matchEither))) {
         console.log("Doesn't match CSS, returning");
         return false;
       }
@@ -159,7 +162,7 @@ export class SmashApp {
     previousStates.push(await this.detectFullState());
     await waitFor(500);
     let state = await this.detectFullState();
-    while (previousStates.some(s => s !== state)) {
+    while (previousStates.some((s) => s !== state)) {
       console.log('State do not match', state, previousStates);
       previousStates.shift();
       previousStates.push(state);
@@ -180,9 +183,9 @@ export class SmashApp {
       return SmashState.MAIN_MENU;
     } else if (await match(ruleset)) {
       return SmashState.RULESET;
-    } else if (!IS_USING_REAL_SWITCH && await match(stageSelection)) {
+    } else if (!IS_USING_REAL_SWITCH && (await match(stageSelection))) {
       return SmashState.STAGE_SELECTION;
-    } else if (await match(css)) {
+    } else if (await this.matchAnyCss(match)) {
       return SmashState.CSS;
     } else if (await this.checkForWinner()) {
       return SmashState.MATCH_FINISHED_CHECKING_WINNERS;
@@ -191,6 +194,15 @@ export class SmashApp {
     } else {
       return SmashState.MATCH_IN_PROGRESS;
     }
+  }
+
+  private async matchAnyCss(match: ReturnType<typeof stateMatcher>['match']) {
+    return (
+      (await match(css)) ||
+      (await match(cssTournament)) ||
+      (await match(cssStream)) ||
+      (await match(cssClean))
+    );
   }
 
   private async checkForWinner() {

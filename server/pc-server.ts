@@ -71,8 +71,9 @@ export class PCServer {
             }
           }
         } else if (await hasEnoughEntriesForTournament()) {
-          const newTournamentId = await createNewTournament();
+          const {tournamentId: newTournamentId, name, url} = await createNewTournament();
           await fillAndStartTournament(newTournamentId);
+          this.chat.sendMessage(`"${name}" tournament started! Bracket: ${url}`);
         } else {
           // Single match mode
           let match = await getNextSingleMatch();

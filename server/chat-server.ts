@@ -190,17 +190,21 @@ const createCommands = ({
       return;
     }
 
-    if (user.points === 0) {
-      client.say(channel, `${userName} sadly doesn't have anything left.`);
-      return;
-    }
+    const isPityBet = user.points === 0 && bet === 1;
 
-    if (user.points < bet) {
-      client.say(
-        channel,
-        `${userName} can only bet ${pointsString(user.points)}`
-      );
-      return;
+    if (!isPityBet) {
+      if (user.points === 0) {
+        client.say(channel, `${userName} sadly doesn't have anything left. But you can have a pity bet of 1!`);
+        return;
+      }
+
+      if (user.points < bet) {
+        client.say(
+          channel,
+          `${userName} can only bet ${pointsString(user.points)}`
+        );
+        return;
+      }
     }
 
     console.log("Trying to set bet");
@@ -250,19 +254,28 @@ const createCommands = ({
     betEntry.matchId = match.matchId;
     betEntry.player = playerNum === "1" ? 1 : 2;
 
-    user.points = user.points - bet;
+    user.points = Math.max(user.points - bet, 0);
 
     await betEntry.save();
     await user.save();
 
     overlay.updateMatchesData();
     overlay.updateEntries();
-    client.say(
-      channel,
-      `${userName} bet ${bet} points on "${
-        playerNum === "1" ? match.first.name : match.second.name
-      }" and now has ${user.points} points.`
-    );
+    if (isPityBet) {
+      client.say(
+        channel,
+        `${userName} bet a pity bet (1 point) "${
+          playerNum === "1" ? match.first.name : match.second.name
+        }".`
+      );
+    } else {
+      client.say(
+        channel,
+        `${userName} bet ${bet} points on "${
+          playerNum === "1" ? match.first.name : match.second.name
+        }" and now has ${user.points} points.`
+      );
+    }
   },
   currentbet: async ({ userName, userId }) => {
     let tournament = await getNextTournament();
@@ -349,7 +362,7 @@ const createCommands = ({
       );
     }
   },
-  enter: async ({ userName, userId }, character, name) => {
+  enter: async ({ userName, userId }, character, ...nameParts) => {
     if (!character) {
       client.say(
         channel,
@@ -357,6 +370,8 @@ const createCommands = ({
       );
       return;
     }
+
+    const name = nameParts.join(" ");
 
     if (name) {
       if (name.length > MAX_NAME_LENGTH) {

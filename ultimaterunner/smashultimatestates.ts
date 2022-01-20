@@ -45,6 +45,24 @@ export const css: AppState = {
   },
 };
 
+export const cssTournament: AppState = {
+  description: 'The character selection screen when a tournament is running',
+  referenceFile: REFERENCES_FOLDER + '/css-tournament.png',
+  region: css.region,
+};
+
+export const cssClean: AppState = {
+  description: 'The character selection screen when there is no overlay',
+  referenceFile: REFERENCES_FOLDER + '/css-clean.png',
+  region: css.region,
+};
+
+export const cssStream: AppState = {
+  description: 'The character selection screen when there is a stream overlay',
+  referenceFile: REFERENCES_FOLDER + '/css-on-stream.png',
+  region: css.region,
+};
+
 export const isPlayerOneACPU: AppState = {
   description: 'Whether the player 1 is a cpu',
   referenceFile: REFERENCES_FOLDER + '/p1cpu.png',

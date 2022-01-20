@@ -17,8 +17,7 @@ const CONSTANTS = {
     "Lucas", "Sonic", "KingDeDeDe", "Olimar", "Lucario", "ROB", "ToonLink", "Wolf", "Villager", "MegaMan", "WiiFitTrainer", "Rosalina", "LittleMac", 
     "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",  "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", 
     "Ridley", "Simon", "Richter", "KRool", "Isabelle", "Incineroar", "PiranhaPlant", "Joker", "Hero", "BanjoKazooie", "Terry", "Byleth", "MinMin",
-    EMPTYSPOT, EMPTYSPOT, "Steve", "Sephiroth", "Pyra", "Kazuya", "Sora", EMPTYSPOT, EMPTYSPOT, EMPTYSPOT, RANDOMSPOT, EMPTYSPOT, EMPTYSPOT,
-    // "MiiBrawler", "MiiSword", "MiiGunner", RANDOMSPOT, EMPTYSPOT, EMPTYSPOT,
+    EMPTYSPOT, EMPTYSPOT, "Steve", "Sephiroth", "Pyra", "Kazuya", "Sora", "MiiBrawler", "MiiSword", "MiiGunner", RANDOMSPOT, EMPTYSPOT, EMPTYSPOT,
   ],
   charactersPerRow: 13,
   characterBox: {
@@ -87,8 +86,11 @@ class CharacterCursor {
       `Player ${this.player} trying to get to ${character} (${index}, ${rowNumber}, ${colNumber}) on ${x},${y}`
     );
     await this.getTo(x, y);
-    await this.controller.press(Inputs.A).andThen();
-    await this.controller.execute();
+    await this.controller.press(Inputs.A).execute();
+    if (character.startsWith("Mii")) {
+      await waitFor(500);
+      await this.controller.press(Inputs.A).execute();
+    }
   }
 
   async getTo(targetX: number, targetY: number) {

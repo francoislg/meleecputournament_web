@@ -17,6 +17,7 @@ import * as ONLINEBOTS from "./onlinebots.json";
 import * as TOPBOTS from "./top100bots.json";
 import { writeFile } from "fs/promises";
 import { updateBots } from "./updatebots";
+import { reportLog } from "./log";
 
 const knownBots = [
   "shadowy_stix",
@@ -157,6 +158,10 @@ const createCommands = ({
     }
 
     client.say(channel, `${userName} has ${user.points} points`);
+  },
+  report: async ({ userName }, ...args) => {
+    reportLog(`${userName}: ${args.join(" ")}`)
+    client.say(channel, `${userName}'s report has been logged, it will be read by the admin.`);
   },
   bet: async ({ userName, userId }, playerNum, amount) => {
     if (playerNum !== "1" && playerNum !== "2") {

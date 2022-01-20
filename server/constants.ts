@@ -110,7 +110,10 @@ export const CHARACTERS = [
   "Sephiroth",
   "Pyra",
   "Kazuya",
-  "Sora"
+  "Sora",
+  "MiiBrawler", 
+  "MiiSword", 
+  "MiiGunner"
 ] as const;
 
 type AllCharacters = typeof CHARACTERS[number];
@@ -200,6 +203,15 @@ const characterDefs: Record<AllCharacters, CharDef> = {
     aliases: ["Meta Knight", "MK"],
   },
   Mewtwo: {},
+  MiiBrawler: {
+    aliases: ["Mii Brawler"]
+  },
+  MiiSword: {
+    aliases: ["Mii Swordfighter"]
+  },
+  MiiGunner: {
+    aliases: ["Mii Gunner"]
+  },
   MinMin: {
     aliases: ["Min Min"],
   },

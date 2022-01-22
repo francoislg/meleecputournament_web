@@ -52,6 +52,7 @@ export interface EntryInfo {
   name: string;
   character: string;
   userName: string;
+  color: number;
 }
 
 export interface EntriesInfo {
@@ -143,10 +144,11 @@ const getLatestEntries = async (): Promise<EntriesInfo> => {
   });
 
   return {
-    entries: entries.map(({ name, character, userId }) => ({
+    entries: entries.map(({ name, character, userId, color }) => ({
       name,
       character,
       userName: relatedUsers.find((u) => u.twitchId === userId)?.twitchUsername,
+      color,
     })),
   };
 };

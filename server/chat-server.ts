@@ -45,9 +45,8 @@ const knownBots = [
 let JOIN_BLACKLIST = [...ONLINEBOTS, ...TOPBOTS, ...knownBots];
 setInterval(async () => {
   const newOnlineBots = await updateBots();
-  JOIN_BLACKLIST = [...newOnlineBots, ...TOPBOTS, ...knownBots]
-}, 1000 * 60 * 60)
-
+  JOIN_BLACKLIST = [...newOnlineBots, ...TOPBOTS, ...knownBots];
+}, 1000 * 60 * 60);
 
 // tmi.js doc: https://github.com/tmijs/docs/blob/gh-pages/_posts
 const tmi = require("tmi.js");
@@ -60,7 +59,7 @@ const JOIN_MESSAGE_ENABLED = true;
 const JOIN_TIME_BUFFER_SEC = 20;
 const EXPIRATION_OF_RECENT_LOGIN = 60 * 60 * 1000;
 
-let recentLogins: Array<{expiring: Date, name: string}> = [];
+let recentLogins: Array<{ expiring: Date; name: string }> = [];
 
 if (!OAUTH_TOKEN) {
   throw new Error("Twitch token not provided.");
@@ -162,9 +161,18 @@ const createCommands = ({
 
     client.say(channel, `${userName} has ${user.points} points`);
   },
+  colors: async ({}, character) => {
+    client.say(
+      channel,
+      `Should be a number between 1-8, in order visible here: https://www.ssbwiki.com/Alternate_costume_(SSBU)#${character}`
+    );
+  },
   report: async ({ userName }, ...args) => {
-    reportLog(`${userName}: ${args.join(" ")}`)
-    client.say(channel, `${userName}'s report has been logged, it will be read by the admin.`);
+    reportLog(`${userName}: ${args.join(" ")}`);
+    client.say(
+      channel,
+      `${userName}'s report has been logged, it will be read by the admin.`
+    );
   },
   bet: async ({ userName, userId }, playerNum, amount) => {
     if (playerNum !== "1" && playerNum !== "2") {
@@ -197,7 +205,10 @@ const createCommands = ({
 
     if (!isPityBet) {
       if (user.points === 0) {
-        client.say(channel, `${userName} sadly doesn't have anything left. But you can have a pity bet of 1!`);
+        client.say(
+          channel,
+          `${userName} sadly doesn't have anything left. But you can have a pity bet of 1!`
+        );
         return;
       }
 
@@ -374,6 +385,20 @@ const createCommands = ({
       return;
     }
 
+    function isColorNumber(color: string) {
+      try {
+        const c = parseInt(color);
+        return c >= 1 && c <= 8;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    let color = null;
+    if (isColorNumber(nameParts[nameParts.length - 1])) {
+      color = parseInt(nameParts.pop());
+    }
+
     const name = nameParts.join(" ");
 
     if (name) {
@@ -420,11 +445,17 @@ const createCommands = ({
     newEntry.userId = userId;
     newEntry.name = name || `${userName}'s ${foundCharacter}`;
     newEntry.character = foundCharacter;
+    newEntry.color = color;
 
     await newEntry.save();
 
     overlay.updateMatchesData();
-    client.say(channel, `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ''}.`);
+    client.say(
+      channel,
+      `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ""}${
+        color ? ` with color #${color}` : ""
+      }.`
+    );
   },
 });
 
@@ -475,8 +506,12 @@ export class ChatServer {
             return;
           }
 
-          recentLogins = recentLogins.filter(login => login.expiring < new Date());
-          if (recentLogins.filter(login => login.name === userName).length > 0) {
+          recentLogins = recentLogins.filter(
+            (login) => login.expiring < new Date()
+          );
+          if (
+            recentLogins.filter((login) => login.name === userName).length > 0
+          ) {
             return;
           }
 
@@ -492,10 +527,14 @@ export class ChatServer {
                 },
               });
 
-              recentLogins.push(...peopleToGreet.map(p => ({
-                name: p,
-                expiring: new Date(new Date().valueOf() + EXPIRATION_OF_RECENT_LOGIN),
-              })))
+              recentLogins.push(
+                ...peopleToGreet.map((p) => ({
+                  name: p,
+                  expiring: new Date(
+                    new Date().valueOf() + EXPIRATION_OF_RECENT_LOGIN
+                  ),
+                }))
+              );
 
               let returning = peopleToGreet
                 .map((p) => users.find((user) => user.twitchUsername === p))

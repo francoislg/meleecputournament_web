@@ -8,6 +8,7 @@ import {
   getPossibleEntries,
   MatchMessage,
 } from "./tournament-commands";
+import { tryParseNumber } from "./parsing";
 
 // BE CAREFUL, with `.aggregate`, the entries do not have the `id` property.
 export const twoNextEntries = async () => {
@@ -28,6 +29,7 @@ export const twoNextEntries = async () => {
         // Here should implement all the IEntryModel properties
         tournamentId: { $first: "$tournamentId" },
         id: { $first: "$_id" },
+        color: { $first: "$color" },
         userId: { $first: "$userId" },
         name: { $first: "$name" },
         character: { $first: "$character" },
@@ -156,12 +158,14 @@ const findCompleteMatchMetaFromMatch = async (
       character: firstParticipant?.character || "???",
       name: firstParticipant?.name || "???",
       temporary: !firstParticipant?.userId,
+      color: tryParseNumber(firstParticipant?.color),
     },
     second: {
       id: match.player2Id,
       character: secondParticipant?.character || "???",
       name: secondParticipant?.name || "???",
       temporary: !secondParticipant?.userId,
+      color: tryParseNumber(secondParticipant?.color),
     },
   };
 };
@@ -206,12 +210,14 @@ export const getUpcomingSingleMatch =
       character = "???",
       name = "The next entry or a dummy",
       userId,
+      color,
     } = entries[0] || {};
     const {
       _id: secondId = 0,
       character: secondCharacter = "???",
       name: secondName = "The next entry or a dummy",
       userId: secondUserId,
+      color: secondColor,
     } = entries[1] || {};
 
     const count = await SingleMatchModel.countDocuments();
@@ -223,12 +229,14 @@ export const getUpcomingSingleMatch =
         character,
         name,
         temporary: !userId,
+        color: tryParseNumber(color),
       },
       second: {
         id: secondId,
         character: secondCharacter,
         name: secondName,
         temporary: !secondUserId,
+        color: tryParseNumber(secondColor),
       },
     };
   };
@@ -287,11 +295,13 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
       id: match.player1Id,
       character: playersToAdd[0].character,
       name: playersToAdd[0].name,
+      color: tryParseNumber(playersToAdd[0].color),
     },
     second: {
       id: match.player2Id,
       character: playersToAdd[1].character,
       name: playersToAdd[1].name,
+      color: tryParseNumber(playersToAdd[1].color),
     },
   };
 };

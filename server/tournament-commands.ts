@@ -11,6 +11,7 @@ import { BetModel } from "./models/Bet";
 import { createDummyEntries } from "./entries";
 import { Award, givePointsToUser } from "./singlematches-commands";
 import { importantLog } from "./log";
+import { tryParseNumber } from "./parsing";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
@@ -26,6 +27,7 @@ export interface PlayerMessageMeta {
   id: string;
   name: string;
   character: string;
+  color?: number;
   temporary?: boolean;
 }
 
@@ -46,6 +48,7 @@ export const getPossibleEntries = () => {
         // Here should implement all the IEntryModel properties
         tournamentId: { $first: "$tournamentId" },
         id: { $first: "$_id" },
+        color: { $first: "$color" },
         userId: { $first: "$userId" },
         name: { $first: "$name" },
         character: { $first: "$character" },
@@ -182,11 +185,13 @@ const findCompleteMatchMetaFromMatch = async (
       id: `${match.player1_id}`,
       character: firstParticipant?.character || "???",
       name: firstParticipant?.name || "Winner of the current match",
+      color: tryParseNumber(firstParticipant?.color),
     },
     second: {
       id: `${match.player2_id}`,
       character: secondParticipant?.character || "???",
       name: secondParticipant?.name || "Winner of the current match",
+      color: tryParseNumber(secondParticipant?.color),
     },
   };
 };

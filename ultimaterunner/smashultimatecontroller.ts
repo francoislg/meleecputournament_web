@@ -87,7 +87,7 @@ class CharacterCursor {
     );
     await this.getTo(x, y);
     await this.controller.press(Inputs.A).execute();
-    if (character.startsWith("Mii")) {
+    if (character.startsWith('Mii')) {
       await waitFor(500);
       await this.controller.press(Inputs.A).execute();
     }
@@ -138,7 +138,12 @@ class CharacterCursor {
   }
 
   async selectColor(color?: number) {
-    const colorPresses = color ?? Math.random() * 8;
+    // 1-8 here
+    const c: number = color ?? Math.ceil(Math.random() * 8);
+    // [1,2,3,4,5,6,7,8].map(a => (9 - (a)) % 8)
+    // [0, 7, 6, 5, 4, 3, 2, 1]
+    // We need 0 press on the original color, then the *inverse* number of presses (since we are using L)
+    const colorPresses = (9 - c) % 8;
     for (let i = 0; i < colorPresses; i++) {
       this.controller.press(Inputs.L).andThen();
     }
@@ -150,8 +155,8 @@ export class SmashUltimateControllers {
   private player1CSSCursor: CharacterCursor;
   private player2CSSCursor: CharacterCursor;
   public controllers: {
-    player1: AsyncController,
-    player2: AsyncController,
+    player1: AsyncController;
+    player2: AsyncController;
   };
   constructor(private player1: AsyncController, private player2: AsyncController) {
     this.player1CSSCursor = new CharacterCursor(player1, 1);
@@ -159,7 +164,7 @@ export class SmashUltimateControllers {
     this.controllers = {
       player1,
       player2,
-    }
+    };
   }
 
   async connect() {

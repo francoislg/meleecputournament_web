@@ -13,6 +13,8 @@ const entry = new Schema(
 );
 
 export interface IEntryModel {
+  // ID here is a bit of a hack. It's available on Document, but we also would like to use it when we aggregate and need this ID.
+  id: string;
   name: string;
   character: string;
   userId?: string;

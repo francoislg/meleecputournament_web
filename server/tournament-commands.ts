@@ -6,8 +6,7 @@ import {
   ParticipantAdapter,
 } from "challonge-ts";
 import { TournamentModel } from "./models/Tournament";
-import { EntryModel } from "./models/Entry";
-import { UserModel } from "./models/User";
+import { EntryModel, IEntryModel } from "./models/Entry";
 import { BetModel } from "./models/Bet";
 import { createDummyEntries } from "./entries";
 import { Award, givePointsToUser } from "./singlematches-commands";
@@ -15,7 +14,7 @@ import { importantLog } from "./log";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
-export const MAXIMUM_NUMBER_OF_PARTICIPANTS = 24;
+export const MAXIMUM_NUMBER_OF_PARTICIPANTS = 16;
 
 export interface MatchMessage {
   first: PlayerMessageMeta;
@@ -36,6 +35,25 @@ if (!CHALLONGE_API_KEY) {
 
 export const getEvenNumber = (n: number) => Math.floor(n / 2) * 2;
 
+export const getPossibleEntries = () => {
+  return EntryModel.aggregate<IEntryModel>([
+    {
+      $match: { tournamentId: null },
+    },
+    {
+      $group: {
+        _id: "$userId",
+        // Here should implement all the IEntryModel properties
+        tournamentId: { $first: "$tournamentId" },
+        id: { $first: "$_id" },
+        userId: { $first: "$userId" },
+        name: { $first: "$name" },
+        character: { $first: "$character" },
+      },
+    },
+  ]);
+};
+
 export const finishMatch = async (
   tournamentId: string,
   matchId: number,
@@ -45,28 +63,38 @@ export const finishMatch = async (
   }: { winnerId: number; isWinnerFirstPlayer: boolean }
 ) => {
   console.log(`Finishing match ${tournamentId}/${matchId}: ${winnerId}`);
-  const match = await MatchAdapter.update(CHALLONGE_API_KEY, tournamentId, matchId, {
-    match: {
-      winner_id: winnerId,
-      scores_csv: isWinnerFirstPlayer ? `1-0` : `0-1`,
-    },
-  });
+  const match = await MatchAdapter.update(
+    CHALLONGE_API_KEY,
+    tournamentId,
+    matchId,
+    {
+      match: {
+        winner_id: winnerId,
+        scores_csv: isWinnerFirstPlayer ? `1-0` : `0-1`,
+      },
+    }
+  );
 
   let awards: Award[] = [];
 
   try {
-    const participants = await ParticipantAdapter.index(
+    const badlyTypedParticipants = await ParticipantAdapter.index(
       CHALLONGE_API_KEY,
       tournamentId
     );
+    const participants = badlyTypedParticipants.participants.map(
+      (p) => (p as any).participant as typeof p
+    );
     const findParticipant = async (id: number) => {
-      const participant = participants.participants.find(
+      const participant = participants.find(
         (participant) => participant.id === id
       );
       return !!participant ? await EntryModel.findById(participant.misc) : null;
     };
-    console.log("PARTICIPANTS", participants)
-    const winner = await findParticipant(isWinnerFirstPlayer ? match.match.player1_id : match.match.player2_id);
+    console.log("PARTICIPANTS", participants);
+    const winner = await findParticipant(
+      isWinnerFirstPlayer ? match.match.player1_id : match.match.player2_id
+    );
     console.log("WINNER", winner);
     if (winner?.userId) {
       const award = await givePointsToUser(winner.userId, 5);
@@ -301,9 +329,9 @@ export const addParticipants = async (tournamentId: string) => {
     MAXIMUM_NUMBER_OF_PARTICIPANTS - currentNumberOfParticipants
   );
 
-  const playersToAdd = await EntryModel.find({
-    tournamentId: null,
-  }).limit(numberOfEmptySpots);
+  const playersToAdd = (
+    await getPossibleEntries().limit(numberOfEmptySpots)
+  ).filter((entry) => !!entry.userId);
 
   const numberExistingPlusNewParticipants =
     playersToAdd.length + currentNumberOfParticipants;
@@ -364,14 +392,18 @@ export const givePointsToWinner = async (tournamentId: string) => {
       CHALLONGE_API_KEY,
       tournamentId
     );
-    const participants = badlyTypedParticipants.participants.map(p => (p as any).participant as typeof p);
+    const participants = badlyTypedParticipants.participants.map(
+      (p) => (p as any).participant as typeof p
+    );
     const winner = participants.find(
       (participant) => participant.final_rank === 1
     );
     const entry = await EntryModel.findById(winner.misc);
     if (entry) {
       if (entry.userId) {
-        console.log(`TOURNAMENT RESULT: Setting ${entry.userId} as the tournament winner`)
+        console.log(
+          `TOURNAMENT RESULT: Setting ${entry.userId} as the tournament winner`
+        );
         await TournamentModel.findOneAndUpdate(
           {
             tournamentId,

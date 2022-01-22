@@ -3,36 +3,83 @@ import { UserModel } from "./models/User";
 import { BetModel } from "./models/Bet";
 import { ISingleMatchModel, SingleMatchModel } from "./models/SingleMatch";
 import { createDummyEntries } from "./entries";
-import { getBetsForMatch, MatchMessage } from "./tournament-commands";
+import {
+  getBetsForMatch,
+  getPossibleEntries,
+  MatchMessage,
+} from "./tournament-commands";
 
 // BE CAREFUL, with `.aggregate`, the entries do not have the `id` property.
-const twoNextEntries = () =>
-  EntryModel.aggregate([
+export const twoNextEntries = async () => {
+  const firstTwo = await EntryModel.aggregate([
     {
       $addFields: {
         isDummy: { $cond: [{ $not: ["$userId"] }, 2, 1] },
       },
     },
+    {
+      $match: {
+        tournamentId: null,
+      },
+    },
+    {
+      $group: {
+        _id: "$userId",
+        // Here should implement all the IEntryModel properties
+        tournamentId: { $first: "$tournamentId" },
+        id: { $first: "$_id" },
+        userId: { $first: "$userId" },
+        name: { $first: "$name" },
+        character: { $first: "$character" },
+        isDummy: { $first: "$isDummy" },
+      },
+    },
   ])
-    .match({
-      tournamentId: null,
-    })
     .sort({
       isDummy: 1,
       createdAt: 1,
     })
     .limit(2);
 
+  if (firstTwo.length < 2) {
+    const dummies = await EntryModel.aggregate([
+      {
+        $addFields: {
+          isDummy: { $cond: [{ $not: ["$userId"] }, 2, 1] },
+        },
+      },
+      {
+        $match: {
+          tournamentId: null,
+          userId: null,
+        },
+      },
+    ])
+      .sort({
+        createdAt: 1,
+      })
+      .skip(firstTwo.length)
+      .limit(2 - firstTwo.length);
+
+    firstTwo.push(...dummies);
+  }
+
+  return firstTwo;
+};
+
 export const FAKE_TOURNAMENT_ID = "singlematches";
 
 const NUMBER_OF_ENTRIES_FOR_TOURNAMENT = 8;
 
 export const hasEnoughEntriesForTournament = async () => {
-  const entries = await EntryModel.find({
-    tournamentId: null,
-  }).limit(NUMBER_OF_ENTRIES_FOR_TOURNAMENT);
+  const entries = await getPossibleEntries().limit(
+    NUMBER_OF_ENTRIES_FOR_TOURNAMENT
+  );
 
-  return entries.length === NUMBER_OF_ENTRIES_FOR_TOURNAMENT;
+  return (
+    entries.filter((entry) => !!entry.userId).length >=
+    NUMBER_OF_ENTRIES_FOR_TOURNAMENT
+  );
 };
 
 export const hasSingleMatchInProgress = async () => {
@@ -175,13 +222,13 @@ export const getUpcomingSingleMatch =
         id,
         character,
         name,
-        temporary: !userId
+        temporary: !userId,
       },
       second: {
         id: secondId,
         character: secondCharacter,
         name: secondName,
-        temporary: !secondUserId
+        temporary: !secondUserId,
       },
     };
   };
@@ -220,6 +267,7 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
   match.player1Id = playersToAdd[0].id || playersToAdd[0]._id;
   match.player2Id = playersToAdd[1].id || playersToAdd[1]._id;
   match.winner = 0;
+  match.ruleset = "fair";
   match.save();
 
   await EntryModel.updateMany(

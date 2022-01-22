@@ -7,6 +7,7 @@ const singleMatch = new Schema(
     matchId: Number,
     started: Boolean,
     winner: Number,
+    ruleset: String,
   },
   {
     timestamps: true,
@@ -19,6 +20,7 @@ export interface ISingleMatchModel {
   matchId: number,
   started: boolean;
   winner: 0 | 1 | 2;
+  ruleset: 'chaotic' | 'fair' | 'other'
 }
 
 export const SingleMatchModel = model<ISingleMatchModel & Document>(

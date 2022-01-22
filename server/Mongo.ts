@@ -7,7 +7,7 @@ if (!MONGO_URL) {
 
 export const connectToMongo = async () => {
   console.log("Logging into Mongo");
-  await mongoose.connect(MONGO_URL, {
+  const mongo = await mongoose.connect(MONGO_URL, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     bufferCommands: false,
@@ -17,4 +17,5 @@ export const connectToMongo = async () => {
     console.error(err);
   });
   console.log("Finished logging into Mongo");
+  return mongo;
 };

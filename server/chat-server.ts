@@ -58,6 +58,9 @@ const OAUTH_TOKEN = process.env.AT_TWITCH_OAUTH_TOKEN;
 
 const JOIN_MESSAGE_ENABLED = true;
 const JOIN_TIME_BUFFER_SEC = 20;
+const EXPIRATION_OF_RECENT_LOGIN = 60 * 60 * 1000;
+
+let recentLogins: Array<{expiring: Date, name: string}> = [];
 
 if (!OAUTH_TOKEN) {
   throw new Error("Twitch token not provided.");
@@ -428,6 +431,7 @@ const createCommands = ({
 export class ChatServer {
   client: any;
   constructor(overlay: OverlayServer) {
+    console.log("Starting chat server");
     const channel = CHANNEL_NAME;
     const client = new tmi.client({
       connection: {
@@ -471,6 +475,11 @@ export class ChatServer {
             return;
           }
 
+          recentLogins = recentLogins.filter(login => login.expiring < new Date());
+          if (recentLogins.filter(login => login.name === userName).length > 0) {
+            return;
+          }
+
           peopleToGreet.push(userName);
 
           clearTimeout(timeout);
@@ -482,6 +491,11 @@ export class ChatServer {
                   $in: peopleToGreet,
                 },
               });
+
+              recentLogins.push(...peopleToGreet.map(p => ({
+                name: p,
+                expiring: new Date(new Date().valueOf() + EXPIRATION_OF_RECENT_LOGIN),
+              })))
 
               let returning = peopleToGreet
                 .map((p) => users.find((user) => user.twitchUsername === p))

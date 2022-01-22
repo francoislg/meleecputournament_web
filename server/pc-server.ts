@@ -38,6 +38,7 @@ export class PCServer {
     socket: Socket,
     { reconnecting }: { reconnecting: boolean }
   ) {
+    console.log("Connecting PC server");
     const fillAndStartTournament = async (tournamentId: string) => {
       console.log("Creating and starting a new tournament");
       await addParticipants(tournamentId);
@@ -73,7 +74,7 @@ export class PCServer {
         } else if (await hasEnoughEntriesForTournament()) {
           const {tournamentId: newTournamentId, name, url} = await createNewTournament();
           await fillAndStartTournament(newTournamentId);
-          this.chat.sendMessage(`"${name}" tournament started! Bracket: ${url}`);
+          this.chat.sendMessage(`"${name}" tournament started! Bracket: challonge.com/${url}`);
         } else {
           // Single match mode
           let match = await getNextSingleMatch();

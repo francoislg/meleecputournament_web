@@ -24,6 +24,6 @@
     .tournament {
         position: fixed;
         top: 0px;
-        left: 50px;
+        left: 120px;
     }
 </style>

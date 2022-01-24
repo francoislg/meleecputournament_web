@@ -2,15 +2,16 @@
   "scripts": {
     "setupinputs": "ts-node index.ts --setupinputs",
     "sync": "ts-node index.ts --setupinputs --realswitch",
-    "standalone": "ts-node index.ts --standalone --realswitch",
+    "standalone": "nodemon index.ts --standalone --realswitch",
     "unlock": "ts-node index.ts --unlock --realswitch",
     "setup": "ts-node index.ts --setup",
-    "start": "ts-node index.ts",
+    "start": "nodemon index.ts",
     "dev": "ts-node-dev index.ts"
   },
   "dependencies": {
     "dotenv": "^8.2.0",
     "jimp": "^0.16.1",
+    "nodemon": "^2.0.15",
     "ps-node": "^0.1.6",
     "readline": "^1.3.0",
     "robotjs": "^0.6.0",

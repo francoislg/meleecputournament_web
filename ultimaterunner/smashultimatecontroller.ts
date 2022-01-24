@@ -170,10 +170,11 @@ export class SmashUltimateControllers {
   async connect() {
     // Seems to work for P1
     await this.player1.hold(Inputs.L).and().hold(Inputs.R).forMilliseconds(1000).execute();
-    await waitFor(3000);
+    await waitFor(2000);
     // L doesn't work for P2, but Start seems OK
+    await this.player2.hold(Inputs.L).and().hold(Inputs.R).forMilliseconds(1000).execute();
     await this.player2.press(Inputs.START).execute();
-    await waitFor(3000);
+    await waitFor(1000);
   }
 
   async startTheGame() {

@@ -6,7 +6,7 @@
   "scripts": {
     "bots": "ts-node updatebots.ts",
     "dev": "ts-node-dev server.ts",
-    "start": "ts-node server.ts",
+    "start": "nodemon server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,6 +22,7 @@
   "dependencies": {
     "challonge-ts": "0.0.2",
     "mongoose": "^5.12.1",
+    "nodemon": "^2.0.15",
     "socket.io": "^4.0.0",
     "tmi.js": "^1.7.5"
   },

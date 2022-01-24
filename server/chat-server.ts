@@ -164,7 +164,7 @@ const createCommands = ({
   colors: async ({}, character) => {
     client.say(
       channel,
-      `Should be a number between 1-8, in order visible here: https://www.ssbwiki.com/Alternate_costume_(SSBU)#${character}`
+      `Should be a number between 1-8, in order visible here: https://www.ssbwiki.com/Alternate_costume_(SSBU)#${character || ""}`
     );
   },
   report: async ({ userName }, ...args) => {

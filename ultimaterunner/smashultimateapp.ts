@@ -12,9 +12,8 @@ import {
   didPlayer2Win,
   isMatchInProgress,
   isPlayerTwoACPU,
-  cssTournament,
-  cssStream,
-  cssClean,
+  cssSleep,
+  isMatchOverSleep,
 } from './smashultimatestates';
 import { stateMatcher } from './states';
 
@@ -199,9 +198,7 @@ export class SmashApp {
   private async matchAnyCss(match: ReturnType<typeof stateMatcher>['match']) {
     return (
       (await match(css)) ||
-      (await match(cssTournament)) ||
-      (await match(cssStream)) ||
-      (await match(cssClean))
+      (await match(cssSleep))
     );
   }
 
@@ -220,7 +217,9 @@ export class SmashApp {
   private async checkForMatchOver() {
     const { match: originalMatch } = this.stateMatcher;
     const match = withMatchEither(originalMatch);
-    return (await match(isMatchOver)) && !(await match(isMatchInProgress));
+    const isOverStandard = await match(isMatchOver) && !(await match(isMatchInProgress))
+    const isOverSleepFallback = (await match(isMatchOverSleep));
+    return isOverStandard || isOverSleepFallback;
   }
 }
 

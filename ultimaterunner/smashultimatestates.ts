@@ -36,7 +36,7 @@ export const stageSelection: AppState = {
 
 export const css: AppState = {
   description: 'The character selection screen',
-  referenceFile: REFERENCES_FOLDER + '/css.png',
+  referenceFile: REFERENCES_FOLDER + '/css-clean.png',
   region: {
     x: 45,
     y: 20,
@@ -45,21 +45,9 @@ export const css: AppState = {
   },
 };
 
-export const cssTournament: AppState = {
-  description: 'The character selection screen when a tournament is running',
-  referenceFile: REFERENCES_FOLDER + '/css-tournament.png',
-  region: css.region,
-};
-
-export const cssClean: AppState = {
-  description: 'The character selection screen when there is no overlay',
-  referenceFile: REFERENCES_FOLDER + '/css-clean.png',
-  region: css.region,
-};
-
-export const cssStream: AppState = {
-  description: 'The character selection screen when there is a stream overlay',
-  referenceFile: REFERENCES_FOLDER + '/css-on-stream.png',
+export const cssSleep: AppState = {
+  description: 'The character selection screen when in sleep mode',
+  referenceFile: REFERENCES_FOLDER + '/css-sleep.png',
   region: css.region,
 };
 
@@ -88,6 +76,17 @@ export const isPlayerTwoACPU: AppState = {
 export const isMatchOver: AppState = {
   description: 'Whether the match is over',
   referenceFile: REFERENCES_FOLDER + '/matchover.png',
+  region: {
+    x: 22,
+    y: 900,
+    w: 50,
+    h: 50,
+  },
+};
+
+export const isMatchOverSleep: AppState = {
+  description: 'Whether the match is over - in sleep mode',
+  referenceFile: REFERENCES_FOLDER + '/matchover-sleep.png',
   region: {
     x: 22,
     y: 900,

@@ -14,9 +14,7 @@ import {
   didPlayer2Win,
   isMatchOver,
   isMatchInProgress,
-  cssClean,
-  cssTournament,
-  cssStream,
+  cssSleep,
 } from './smashultimatestates';
 import { AppState, stateMatcher } from './states';
 import { captureSwitchImage } from './switchscreencapture';
@@ -58,6 +56,12 @@ export const setup = async () => {
     //   regionOffset(windowOffset, css.region),
     //   css.referenceFile
     // );
+
+    // return await captureAndSave(
+    //   regionOffset(windowOffset, isMatchOver.region),
+    //   isMatchOver.referenceFile
+    // );
+
 
     /*
     do {
@@ -163,7 +167,7 @@ export const setup = async () => {
       } else if (!IS_USING_REAL_SWITCH && (await match(stageSelection))) {
         console.log('Restarting from Stage Selection');
         await ult.selectStage();
-      } else if (await match(cssStream) || await match(cssClean) || await match(cssTournament) || await match(css)) {
+      } else if (await match(css) || (await match(cssSleep))) {
         console.log('Restarting from CSS');
       } else {
         isAlreadyOnWin = await yesnoQuestion(

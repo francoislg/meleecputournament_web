@@ -12,7 +12,7 @@ const CONSTANTS = {
   // prettier-ignore
   characters: [
     "Mario", "DonkeyKong", "Link", "Samus", "DarkSamus", "Yoshi", "Kirby", "Fox", "Pikachu", "Luigi", "Ness", "CaptainFalcon", "Jigglypuff", 
-    "Peach", "Daisy", "Bowser", "IceClimbers", "Shiek", "Zelda", "DrMario", "Pichu", "Falco", "Marth", "Lucina", "YoungLink", "Ganondorf", 
+    "Peach", "Daisy", "Bowser", "IceClimbers", "Sheik", "Zelda", "DrMario", "Pichu", "Falco", "Marth", "Lucina", "YoungLink", "Ganondorf", 
     "Mewtwo", "Roy", "Chrom", "GameAndWatch", "MetaKnight", "Pit", "DarkPit", "ZeroSuitSamus", "Wario", "Snake", "Ike", "PokemonTrainer", "DiddyKong", 
     "Lucas", "Sonic", "KingDeDeDe", "Olimar", "Lucario", "ROB", "ToonLink", "Wolf", "Villager", "MegaMan", "WiiFitTrainer", "Rosalina", "LittleMac", 
     "Greninja", "Palutena", "Pac-Man", "Robin", "Shulk", "BowserJr", "DuckHunt", "Ryu",  "Ken", "Cloud", "Corrin", "Bayonetta", "Inkling", 

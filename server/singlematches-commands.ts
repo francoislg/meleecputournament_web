@@ -268,9 +268,9 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
     playersToAdd.push(...created);
   }
 
-  const count = await SingleMatchModel.countDocuments();
+  const [{matchId}] = await SingleMatchModel.find().sort({matchId: -1}).limit(1);
   const match = new SingleMatchModel();
-  match.matchId = count;
+  match.matchId = matchId + 1;
   match.started = false;
   match.player1Id = playersToAdd[0].id || playersToAdd[0]._id;
   match.player2Id = playersToAdd[1].id || playersToAdd[1]._id;

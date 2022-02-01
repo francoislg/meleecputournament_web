@@ -1,5 +1,5 @@
 import { CHARACTERS } from "./constants";
-import { BetModel } from "./models/Bet";
+import { BetModel, IBetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
 import { OverlayServer } from "./overlay-server";
@@ -12,12 +12,13 @@ import {
   getNextTournament,
   getNextTournamentMatch,
   getUpcomingTournamentMatch,
+  MatchMessage,
 } from "./tournament-commands";
 import * as ONLINEBOTS from "./onlinebots.json";
 import * as TOPBOTS from "./top100bots.json";
-import { writeFile } from "fs/promises";
 import { updateBots } from "./updatebots";
 import { reportLog } from "./log";
+import { Document } from "mongoose";
 
 const knownBots = [
   "shadowy_stix",
@@ -110,12 +111,10 @@ const getNumeric = (
   }
 
   if (parsedBet == NaN) {
-    client.say(channel, `${userName} entered an invalid number ${value}.`);
     return;
   }
 
-  if (parsedBet <= 0) {
-    client.say(channel, `${userName} entered an invalid number ${value}.`);
+  if (parsedBet < 0) {
     return;
   }
 
@@ -124,6 +123,37 @@ const getNumeric = (
 
 const pointsString = (points: number) =>
   `${points} point${points > 0 ? "s" : ""}`;
+
+const getMatchAndBet = async (
+  userId: string
+): Promise<
+  [
+    MatchMessage,
+    Awaited<ReturnType<typeof getNextTournament>>,
+    IBetModel & Document<any, {}>
+  ]
+> => {
+  let tournament = await getNextTournament();
+  let match;
+  if (tournament) {
+    match = await getUpcomingTournamentMatch(tournament.id);
+  } else {
+    tournament = {
+      id: FAKE_TOURNAMENT_ID,
+      url: "none",
+      isPending: false,
+    };
+    match = await getUpcomingSingleMatch();
+  }
+
+  const existingBet = await BetModel.findOne({
+    matchId: match.matchId,
+    tournamentId: tournament.id,
+    userId: userId,
+  });
+
+  return [match, tournament, existingBet];
+};
 
 const createCommands = ({
   client,
@@ -159,12 +189,21 @@ const createCommands = ({
       return;
     }
 
-    client.say(channel, `${userName} has ${user.points} points. ${user.points === 0 ? '(You have access to a pity bet of 1 at 0 points)': ''}`);
+    client.say(
+      channel,
+      `${userName} has ${user.points} points. ${
+        user.points === 0
+          ? "(You have access to a pity bet of 1 at 0 points)"
+          : ""
+      }`
+    );
   },
   colors: async ({}, character) => {
     client.say(
       channel,
-      `Should be a number between 1-8, in order visible here: https://www.ssbwiki.com/Alternate_costume_(SSBU)#${character || ""}`
+      `Should be a number between 1-8, in order visible here: https://www.ssbwiki.com/Alternate_costume_(SSBU)#${
+        character || ""
+      }`
     );
   },
   report: async ({ userName }, ...args) => {
@@ -174,12 +213,13 @@ const createCommands = ({
       `${userName}'s report has been logged, it will be read by the admin.`
     );
   },
-  bet: async ({ userName, userId }, playerNum, amount) => {
+  bet: async ({ userName, userId }, playerNum, amount, replace) => {
     if (playerNum !== "1" && playerNum !== "2") {
       client.say(
         channel,
         `${userName} entered a bet for an invalid player. Valid values are 1 or 2.`
       );
+      return;
     }
 
     const bet = getNumeric({ client, channel }, { userId, userName }, amount);
@@ -187,7 +227,7 @@ const createCommands = ({
     if (!bet) {
       client.say(
         channel,
-        `${userName} entered a bet without an amount to bet! For instance, you can bet 5 points on #1 with !at bet 1 5.`
+        `${userName} entered a bet without a valid amount to bet! For instance, you can bet 5 points on #1 with !bet 1 5.`
       );
       return;
     }
@@ -202,6 +242,14 @@ const createCommands = ({
     }
 
     const isPityBet = user.points === 0 && bet === 1;
+    const isReplacingBet = replace === "replace";
+
+    if (isReplacingBet) {
+      const [match, tournament, existingBet] = await getMatchAndBet(userId);
+      if (existingBet) {
+        user.points = user.points + existingBet.bet;
+      }
+    }
 
     if (!isPityBet) {
       if (user.points === 0) {
@@ -221,56 +269,36 @@ const createCommands = ({
       }
     }
 
-    console.log("Trying to set bet");
+    const [match, tournament, existingBet] = await getMatchAndBet(userId);
+    const playerToBet = playerNum === "1" ? 1 : 2;
 
-    let tournament = await getNextTournament();
-    let match;
-    if (tournament) {
-      match = await getUpcomingTournamentMatch(tournament.id);
-    } else {
-      tournament = {
-        id: FAKE_TOURNAMENT_ID,
-        url: "none",
-        isPending: false,
-      };
-      match = await getUpcomingSingleMatch();
-    }
-
-    if (!match) {
-      client.say(
-        channel,
-        `There are no matches to bet on, wait a bit for the next tournament!`
-      );
-      return;
-    }
-
-    const existingBet = await BetModel.findOne({
-      matchId: match.matchId,
-      tournamentId: tournament.id,
-      userId: userId,
-    });
     if (existingBet) {
-      client.say(
-        channel,
-        `${userName} has already entered a bet for this match (${
-          existingBet.bet
-        } on "${
-          existingBet.player === 1 ? match.first.name : match.second.name
-        }"). This is a no-no!`
-      );
-      return;
+      if (isReplacingBet) {
+        existingBet.bet = bet;
+        existingBet.player = playerToBet;
+        await existingBet.save();
+      } else {
+        client.say(
+          channel,
+          `${userName} has already entered a bet for this match (${
+            existingBet.bet
+          } on "${
+            existingBet.player === 1 ? match.first.name : match.second.name
+          }"). If you want to replace your bet, add "replace" at the end as such: !bet 1 5 replace`
+        );
+        return;
+      }
+    } else {
+      const betEntry = new BetModel();
+      betEntry.userId = userId;
+      betEntry.bet = bet;
+      betEntry.tournamentId = tournament.id;
+      betEntry.matchId = match.matchId;
+      betEntry.player = playerToBet;
+      await betEntry.save();
     }
-
-    const betEntry = new BetModel();
-    betEntry.userId = userId;
-    betEntry.bet = bet;
-    betEntry.tournamentId = tournament.id;
-    betEntry.matchId = match.matchId;
-    betEntry.player = playerNum === "1" ? 1 : 2;
 
     user.points = Math.max(user.points - bet, 0);
-
-    await betEntry.save();
     await user.save();
 
     overlay.updateMatchesData();
@@ -285,7 +313,9 @@ const createCommands = ({
     } else {
       client.say(
         channel,
-        `${userName} bet ${bet} points on "${
+        `${userName} ${
+          isReplacingBet ? "is replacing his bet," : "bet"
+        } ${bet} points on "${
           playerNum === "1" ? match.first.name : match.second.name
         }" and now has ${user.points} points.`
       );
@@ -372,7 +402,7 @@ const createCommands = ({
 
       client.say(
         channel,
-        `${userName} was given ${POINTS_TO_START_WITH} points to start.\nYou can now enter a character with \`!at enter CHARACTER NAME\`, such as \`!at enter Kirby FluffBall\``
+        `${userName} was given ${POINTS_TO_START_WITH} points to start.\nYou can now enter a character with \`!enter CHARACTER NAME\`, such as \`!enter Kirby FluffBall\``
       );
     }
   },
@@ -380,7 +410,7 @@ const createCommands = ({
     if (!character) {
       client.say(
         channel,
-        `${userName} didn't enter a character name. Ex: !at enter Mario.`
+        `${userName} didn't enter a character name. Ex: !enter Mario.`
       );
       return;
     }
@@ -552,7 +582,7 @@ export class ChatServer {
                 newUsers.length > 0 &&
                   `Welcome to our unregistered users: ${newUsers.join(
                     ", "
-                  )}! Enter \`!at start\` to register!`,
+                  )}! Enter \`!start\` to register!`,
               ].filter((m) => !!m);
 
               if (messages.length > 0) {
@@ -617,7 +647,7 @@ export class ChatServer {
       ) {
         client.say(
           channel,
-          "Hello! Use `!at start` to register yourself in the game or `!at enter CHARACTER` to enter a character for the next match!"
+          "Hello! Use `!start` to register yourself in the game or `!enter CHARACTER` to enter a character for the next match!"
         );
       }
     });

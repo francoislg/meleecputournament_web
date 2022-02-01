@@ -67,8 +67,12 @@ async function report() {
         player2: Array<IEntryModel>;
       }
     >([
-      { $addFields: { p1id: { $toObjectId: "$player1Id" } } },
-      { $addFields: { p2id: { $toObjectId: "$player2Id" } } },
+      {
+        $addFields: {
+          p1id: { $toObjectId: "$player1Id" },
+          p2id: { $toObjectId: "$player2Id" },
+        },
+      },
       {
         $lookup: {
           from: "entries",

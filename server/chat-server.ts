@@ -159,7 +159,7 @@ const createCommands = ({
       return;
     }
 
-    client.say(channel, `${userName} has ${user.points} points`);
+    client.say(channel, `${userName} has ${user.points} points. ${user.points === 0 ? '(You have access to a pity bet of 1 at 0 points)': ''}`);
   },
   colors: async ({}, character) => {
     client.say(

@@ -220,10 +220,10 @@ export const getUpcomingSingleMatch =
       color: secondColor,
     } = entries[1] || {};
 
-    const count = await SingleMatchModel.countDocuments();
+    const matchId = await getNextMatchId();
 
     return {
-      matchId: count,
+      matchId,
       first: {
         id,
         character,
@@ -258,6 +258,10 @@ export const officiallyStartSingleMatch = async (matchId: number) => {
     }
   );
 };
+export const getNextMatchId = async () => {
+  const [{matchId}] = await SingleMatchModel.find().sort({matchId: -1}).limit(1);
+  return matchId + 1;
+}
 export const createSingleMatch = async (): Promise<MatchMessage> => {
   console.log(`Creating a single match`);
 
@@ -268,9 +272,9 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
     playersToAdd.push(...created);
   }
 
-  const [{matchId}] = await SingleMatchModel.find().sort({matchId: -1}).limit(1);
+  const matchId = await getNextMatchId();
   const match = new SingleMatchModel();
-  match.matchId = matchId + 1;
+  match.matchId = matchId;
   match.started = false;
   match.player1Id = playersToAdd[0].id || playersToAdd[0]._id;
   match.player2Id = playersToAdd[1].id || playersToAdd[1]._id;

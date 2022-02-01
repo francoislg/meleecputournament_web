@@ -2,10 +2,10 @@
   "scripts": {
     "setupinputs": "ts-node index.ts --setupinputs",
     "sync": "ts-node index.ts --setupinputs --realswitch",
-    "standalone": "nodemon index.ts --standalone --realswitch",
+    "standalone": "nodemon index.ts --standalone --realswitch --exitcrash",
     "unlock": "ts-node index.ts --unlock --realswitch",
     "setup": "ts-node index.ts --setup",
-    "start": "nodemon index.ts",
+    "start": "nodemon index.ts --exitcrash",
     "dev": "ts-node-dev index.ts"
   },
   "dependencies": {

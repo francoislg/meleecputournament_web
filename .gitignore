@@ -1,2 +1,5 @@
 node_modules
 onlinebots.json
+data
+*.log
+sheets-creds.json

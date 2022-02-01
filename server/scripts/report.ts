@@ -1,3 +1,4 @@
+import * as sheetConfig from "./sheets-creds.json";
 import { CHARACTERS } from "../constants";
 import { IEntryModel } from "../models/Entry";
 import { ISingleMatchModel, SingleMatchModel } from "../models/SingleMatch";
@@ -5,6 +6,7 @@ import { connectToMongo } from "../Mongo";
 import { mkdir, writeFile } from "fs/promises";
 import * as path from "path";
 import { existsSync } from "fs";
+import { GoogleSpreadsheet } from "google-spreadsheet";
 
 const BASE_DATA_DIR = path.join(__dirname, "data");
 
@@ -154,6 +156,62 @@ async function report() {
           path.join(BASE_DATA_DIR, `${ruleset}_plays.csv`),
           `${playsHeader}${playsRows}`
         );
+      })
+    );
+
+    const doc = new GoogleSpreadsheet(
+      "1ZNuetoT2-R5X5Y-tCvwBo89fNR_uDr2szkmFgMpCpUM"
+    );
+    await doc.useServiceAccountAuth(sheetConfig);
+    await doc.loadInfo();
+
+    await Promise.all(
+      Object.entries(perRuleset).map(async ([ruleset, perRule]) => {
+        const playsSheetName = `"${ruleset}" Plays`;
+        const playsSheet = await doc.sheetsByTitle[playsSheetName];
+        const winsSheetName = `"${ruleset}" Wins Per Char`;
+        const winsSheet = await doc.sheetsByTitle[winsSheetName];
+        if (!playsSheet) {
+          throw `Sheet ${playsSheetName} does not exist`;
+        }
+        if (!winsSheet) {
+          throw `Sheet ${winsSheetName} does not exist`;
+        }
+        await playsSheet.loadCells();
+        playsSheet.getCell(0, 0).value = "";
+        playsSheet.getCell(0, 1).value = "Wins";
+        playsSheet.getCell(0, 2).value = "Loses";
+        playsSheet.getCell(0, 3).value = "Total";
+        playsSheet.getCell(0, 4).value = "WIN RATE";
+        playsSheet.getCell(1, 10).formula = `=SORT(H2:I${CHARACTERS.length + 1})`
+        for (let i = 0; i < CHARACTERS.length; i++) {
+          const rowIndex = i + 1;
+          const x = CHARACTERS[i];
+          playsSheet.getCell(rowIndex, 0).value = x;
+          playsSheet.getCell(rowIndex, 1).value = perRule[x].wins;
+          playsSheet.getCell(rowIndex, 2).value = perRule[x].loses;
+          playsSheet.getCell(rowIndex, 3).value = perRule[x].count;
+          playsSheet.getCell(rowIndex, 3).value = perRule[x].count;
+          playsSheet.getCell(rowIndex, 4).formula = `=$B${rowIndex + 1}/$D${rowIndex + 1}`;
+
+          playsSheet.getCell(rowIndex, 7).formula = `=$E${rowIndex + 1}`;
+          playsSheet.getCell(rowIndex, 8).formula = `=$A${rowIndex + 1}`;
+        }
+        await playsSheet.saveUpdatedCells();
+
+        await winsSheet.loadCells();
+        winsSheet.getCell(0, 0).value = "winner →";
+        CHARACTERS.forEach((x, i) => {
+          const rowIndex = i + 1;
+          winsSheet.getCell(i + 1, 0).value = x;
+          winsSheet.getCell(0, i + 1).value = x;
+
+          CHARACTERS.forEach((y, j) => {
+            const colIndex = j + 1;
+            winsSheet.getCell(rowIndex, colIndex).value = perRule[y].wonAgainst[x].count;
+          });
+        });
+        await winsSheet.saveUpdatedCells();
       })
     );
 

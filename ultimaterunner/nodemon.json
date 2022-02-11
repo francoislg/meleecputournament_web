@@ -1,5 +1,6 @@
 {
     "watch": false,
+    "exitcrash": true,
     "execMap": {
         "ts": "ts-node"
     }

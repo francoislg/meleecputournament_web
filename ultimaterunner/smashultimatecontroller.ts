@@ -173,7 +173,12 @@ export class SmashUltimateControllers {
     await waitFor(2000);
     // L doesn't work for P2, but Start seems OK
     await this.player2.hold(Inputs.L).and().hold(Inputs.R).forMilliseconds(1000).execute();
-    await this.player2.press(Inputs.START).execute();
+    await waitFor(1000);
+    await this.player2.hold(Inputs.A).forMilliseconds(1000).execute();
+    await this.player2.hold(Inputs.B).forMilliseconds(1000).execute();
+    await waitFor(1000);
+    await this.player2.hold(Inputs.START).forMilliseconds(1000).execute();
+  
     await waitFor(1000);
   }
 

@@ -134,7 +134,7 @@ const getLatestEntries = async (): Promise<EntriesInfo> => {
     userId: {$exists: true},
   })
     .sort({
-      createdAt: -1,
+      createdAt: 1,
     })
     .limit(5);
   const relatedUsers = await UserModel.find({

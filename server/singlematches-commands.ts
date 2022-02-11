@@ -20,7 +20,7 @@ export const twoNextEntries = async () => {
     },
     {
       $match: {
-        tournamentId: null,
+        tournamentId: null
       },
     },
     {
@@ -34,29 +34,23 @@ export const twoNextEntries = async () => {
         name: { $first: "$name" },
         character: { $first: "$character" },
         isDummy: { $first: "$isDummy" },
+        createdAt: { $first: "$createdAt" },
       },
     },
-  ])
-    .sort({
-      isDummy: 1,
-      createdAt: 1,
-    })
-    .limit(2);
+    {
+      $sort: {
+        isDummy: 1,
+        createdAt: 1,
+      },
+    },
+  ]).limit(2);
 
   if (firstTwo.length < 2) {
-    const dummies = await EntryModel.aggregate([
-      {
-        $addFields: {
-          isDummy: { $cond: [{ $not: ["$userId"] }, 2, 1] },
-        },
-      },
-      {
-        $match: {
-          tournamentId: null,
-          userId: null,
-        },
-      },
-    ])
+    console.log("Adding dummies to match");
+    const dummies = await EntryModel.find({
+      tournamentId: null,
+      userId: null,
+    })
       .sort({
         createdAt: 1,
       })
@@ -259,9 +253,11 @@ export const officiallyStartSingleMatch = async (matchId: number) => {
   );
 };
 export const getNextMatchId = async () => {
-  const [{matchId}] = await SingleMatchModel.find().sort({matchId: -1}).limit(1);
+  const [{ matchId }] = await SingleMatchModel.find()
+    .sort({ matchId: -1 })
+    .limit(1);
   return matchId + 1;
-}
+};
 export const createSingleMatch = async (): Promise<MatchMessage> => {
   console.log(`Creating a single match`);
 

@@ -129,8 +129,10 @@ async function report() {
       }
       perRule[winner].count += 1;
       perRule[winner].wins += 1;
-      perRule[loser].count += 1;
       perRule[loser].loses += 1;
+      if (winner !== loser) {
+        perRule[loser].count += 1;
+      }
       perRule[winner].wonAgainst[loser].count += 1;
     });
 
@@ -209,6 +211,14 @@ async function report() {
           CHARACTERS.forEach((y, j) => {
             const colIndex = j + 1;
             winsSheet.getCell(rowIndex, colIndex).value = perRule[y].wonAgainst[x].count;
+            if (rowIndex === colIndex) {
+              winsSheet.getCell(rowIndex, colIndex).backgroundColor = {
+                "red": 0.9,
+                "green": 0.9,
+                "blue": 0.9,
+                "alpha": 1
+              }
+            }
           });
         });
         await winsSheet.saveUpdatedCells();

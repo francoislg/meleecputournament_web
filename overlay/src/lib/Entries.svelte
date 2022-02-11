@@ -4,7 +4,7 @@
 </script>
 
 <div>
-	<h2><MeleeText text="Last Entries" /></h2>
+	<h2><MeleeText text="Queue" /></h2>
 	{#if $entries.entries && $entries.entries.length === 0}
 		<div>None! Enter a character with the<br/>!at enter [character] [name] command, such as<br/>!at enter Mario NotLuigi</div>
 	{/if}

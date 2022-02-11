@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "controllers": "ts-node index.ts --onlyconnect --realswitch",
     "setupinputs": "ts-node index.ts --setupinputs",
     "sync": "ts-node index.ts --setupinputs --realswitch",
     "standalone": "nodemon index.ts --standalone --realswitch --exitcrash",

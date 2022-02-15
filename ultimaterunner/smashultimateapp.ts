@@ -14,6 +14,7 @@ import {
   isPlayerTwoACPU,
   cssSleep,
   isMatchOverSleep,
+  cssTeamBattle,
 } from './smashultimatestates';
 import { stateMatcher } from './states';
 
@@ -22,6 +23,7 @@ enum SmashState {
   RULESET = 'ruleset',
   STAGE_SELECTION = 'stageselection',
   CSS = 'css',
+  TEAM_BATTLE_CSS='team_battle_css',
   MATCH_IN_PROGRESS = 'inprogress',
   MATCH_FINISHED = 'finished',
   MATCH_FINISHED_CHECKING_WINNERS = 'checkingwinners',
@@ -69,6 +71,8 @@ export class SmashApp {
         await this.ult.selectDefaultRuleset();
       case SmashState.STAGE_SELECTION:
         await this.ult.selectStage();
+      case SmashState.TEAM_BATTLE_CSS:
+        await this.ult.setTeamBattleBack();
       case SmashState.CSS:
         if (await this.trySetAsCPUACoupleOfTimes()) {
           return {
@@ -184,6 +188,8 @@ export class SmashApp {
       return SmashState.RULESET;
     } else if (!IS_USING_REAL_SWITCH && (await match(stageSelection))) {
       return SmashState.STAGE_SELECTION;
+    } else if (await match(cssTeamBattle)) {
+      return SmashState.TEAM_BATTLE_CSS;
     } else if (await this.matchAnyCss(match)) {
       return SmashState.CSS;
     } else if (await this.checkForWinner()) {

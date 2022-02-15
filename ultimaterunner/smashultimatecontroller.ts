@@ -233,6 +233,14 @@ export class SmashUltimateControllers {
     await waitFor(500);
   }
 
+  async setTeamBattleBack() {
+    await this.player1CSSCursor.calibrate();
+    await waitFor(500);
+    await this.player1CSSCursor.getTo(600, 0);
+    await waitFor(500);
+    await this.player1.press(Inputs.A).execute();
+  }
+
   async setP1AsCPU() {
     await this.player1CSSCursor.calibrate();
     await this.player1CSSCursor.setAsCPU();

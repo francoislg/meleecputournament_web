@@ -51,6 +51,17 @@ export const cssSleep: AppState = {
   region: css.region,
 };
 
+export const cssTeamBattle: AppState = {
+  description: 'Whether the css is on the team battle setting (with the Red Flag)',
+  referenceFile: REFERENCES_FOLDER + '/css-team-battle.png',
+  region: {
+    x: 30,
+    y: 700,
+    w: 25,
+    h: 25,
+  },
+};
+
 export const isPlayerOneACPU: AppState = {
   description: 'Whether the player 1 is a cpu',
   referenceFile: REFERENCES_FOLDER + '/p1cpu.png',

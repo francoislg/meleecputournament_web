@@ -89,6 +89,18 @@ export const CHARACTERS = [
 
 type AllCharacters = typeof CHARACTERS[number];
 
+export const getMiiConfiguration = (character: AllCharacters) => {
+  if (character === 'MiiBrawler') {
+    return '2221'
+  } else if (character === 'MiiGunner') {
+    return '1311'
+  } else if (character === 'MiiSword') {
+    return '1111'
+  } else {
+    return null;
+  }
+}
+
 interface CharDef {
   aliases?: string[];
   syllables?: string[];

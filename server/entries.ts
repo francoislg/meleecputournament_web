@@ -1,4 +1,4 @@
-import { generateName, randomCharacter } from "./constants";
+import { generateName, getMiiConfiguration, randomCharacter } from "./constants";
 import { EntryModel } from "./models/Entry";
 
 export const createDummyEntries = async (playersToCreate: number) => {
@@ -7,6 +7,7 @@ export const createDummyEntries = async (playersToCreate: number) => {
     const character = randomCharacter();
     entry.name = generateName(character);
     entry.character = character;
+    entry.miiConfiguration = getMiiConfiguration(character);
     return entry;
   };
   console.log(`About to create ${playersToCreate} dummies.`);

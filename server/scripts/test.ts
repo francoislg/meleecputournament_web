@@ -1,6 +1,5 @@
 import { EntryModel } from "../models/Entry";
 import { connectToMongo } from "../Mongo";
-import { twoNextEntries } from "../singlematches-commands";
 
 async function test() {
   const mongo = await connectToMongo();

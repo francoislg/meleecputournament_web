@@ -1,4 +1,4 @@
-import { CHARACTERS } from "./constants";
+import { CHARACTERS, getMiiConfiguration } from "./constants";
 import { BetModel, IBetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
@@ -475,6 +475,7 @@ const createCommands = ({
     newEntry.userId = userId;
     newEntry.name = name || `${userName}'s ${foundCharacter}`;
     newEntry.character = foundCharacter;
+    newEntry.miiConfiguration = getMiiConfiguration(foundCharacter);
     newEntry.color = color;
 
     await newEntry.save();

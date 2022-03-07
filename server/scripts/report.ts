@@ -1,5 +1,5 @@
 import * as sheetConfig from "./sheets-creds.json";
-import { CHARACTERS } from "../constants";
+import { CHARACTERS as ORIGINAL_CHARACTERS } from "../constants";
 import { IEntryModel } from "../models/Entry";
 import { ISingleMatchModel, SingleMatchModel } from "../models/SingleMatch";
 import { connectToMongo } from "../Mongo";
@@ -22,6 +22,30 @@ interface CharacterMatrix {
     count: number;
   };
 }
+
+const getFullName = ({
+  character,
+  miiConfiguration,
+}: {
+  character: string;
+  miiConfiguration?: string;
+}) => {
+  return character + (!!miiConfiguration ? ` (${miiConfiguration})` : "");
+};
+
+const CHARACTERS = [
+  ...ORIGINAL_CHARACTERS.filter(
+    (char) =>
+      char !== "MiiBrawler" && char !== "MiiGunner" && char !== "MiiSword"
+  ),
+  // If we ever had different miis, we'll need to update this
+  "MiiBrawler (2313)",
+  "MiiBrawler (2221)",
+  "MiiGunner (1331)",
+  "MiiGunner (1311)",
+  "MiiSword (3111)",
+  "MiiSword (1111)",
+];
 
 function createCharacterMatrix(): CharacterMatrix {
   const matrix: CharacterMatrix = {};
@@ -107,12 +131,12 @@ async function report() {
       }
       const winner =
         match.winner === 1
-          ? match.player1[0].character
-          : match.player2[0].character;
+          ? getFullName(match.player1[0])
+          : getFullName(match.player2[0]);
       const loser =
         match.winner === 1
-          ? match.player2[0].character
-          : match.player1[0].character;
+          ? getFullName(match.player2[0])
+          : getFullName(match.player1[0]);
 
       const perRule = perRuleset[match.ruleset];
       if (!perRule) {
@@ -185,7 +209,9 @@ async function report() {
         playsSheet.getCell(0, 2).value = "Loses";
         playsSheet.getCell(0, 3).value = "Total";
         playsSheet.getCell(0, 4).value = "WIN RATE";
-        playsSheet.getCell(1, 10).formula = `=SORT(H2:I${CHARACTERS.length + 1})`
+        playsSheet.getCell(1, 10).formula = `=SORT(H2:I${
+          CHARACTERS.length + 1
+        })`;
         for (let i = 0; i < CHARACTERS.length; i++) {
           const rowIndex = i + 1;
           const x = CHARACTERS[i];
@@ -194,7 +220,9 @@ async function report() {
           playsSheet.getCell(rowIndex, 2).value = perRule[x].loses;
           playsSheet.getCell(rowIndex, 3).value = perRule[x].count;
           playsSheet.getCell(rowIndex, 3).value = perRule[x].count;
-          playsSheet.getCell(rowIndex, 4).formula = `=$B${rowIndex + 1}/$D${rowIndex + 1}`;
+          playsSheet.getCell(rowIndex, 4).formula = `=IFERROR($B${rowIndex + 1}/$D${
+            rowIndex + 1
+          }; 0)`;
 
           playsSheet.getCell(rowIndex, 7).formula = `=$E${rowIndex + 1}`;
           playsSheet.getCell(rowIndex, 8).formula = `=$A${rowIndex + 1}`;
@@ -210,14 +238,15 @@ async function report() {
 
           CHARACTERS.forEach((y, j) => {
             const colIndex = j + 1;
-            winsSheet.getCell(rowIndex, colIndex).value = perRule[y].wonAgainst[x].count;
+            winsSheet.getCell(rowIndex, colIndex).value =
+              perRule[y].wonAgainst[x].count;
             if (rowIndex === colIndex) {
               winsSheet.getCell(rowIndex, colIndex).backgroundColor = {
-                "red": 0.9,
-                "green": 0.9,
-                "blue": 0.9,
-                "alpha": 1
-              }
+                red: 0.9,
+                green: 0.9,
+                blue: 0.9,
+                alpha: 1,
+              };
             }
           });
         });

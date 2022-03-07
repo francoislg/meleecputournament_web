@@ -26,6 +26,18 @@ const WINDOW_FILE = `${REFERENCES_FOLDER}/window.png`;
 export const setup = async () => {
   console.log('Starting the setup, booting the game.');
 
+  const captureAndSave = async (region: Region, fileName: string) => {
+    if (IS_USING_REAL_SWITCH) {
+      const image = await captureSwitchImage();
+      await image.getRegion(region).save(fileName);
+    } else {
+      const image = await captureImage(region);
+      await image.save(fileName);
+    }
+  };
+
+  const windowOffset = await readWindow();
+
   await withController(async (ult) => {
     if (!IS_USING_REAL_SWITCH) {
       const yuzu = new YuzuCheck(ult);
@@ -35,17 +47,6 @@ export const setup = async () => {
     const screen = getScreenSize();
     console.log('Screen size:', screen);
 
-    const captureAndSave = async (region: Region, fileName: string) => {
-      if (IS_USING_REAL_SWITCH) {
-        const image = await captureSwitchImage();
-        await image.getRegion(region).save(fileName);
-      } else {
-        const image = await captureImage(region);
-        await image.save(fileName);
-      }
-    };
-
-    const windowOffset = await readWindow();
     const windowUpdate = async () => {
       await captureAndSave({ x: windowOffset.x, y: windowOffset.y, ...WINDOW_SIZE }, WINDOW_FILE);
     };
@@ -53,15 +54,9 @@ export const setup = async () => {
     await windowUpdate();
 
     // return await captureAndSave(
-    //   regionOffset(windowOffset, css.region),
-    //   css.referenceFile
-    // );
-
-    // return await captureAndSave(
     //   regionOffset(windowOffset, isMatchOver.region),
     //   isMatchOver.referenceFile
     // );
-
 
     /*
     do {
@@ -167,7 +162,7 @@ export const setup = async () => {
       } else if (!IS_USING_REAL_SWITCH && (await match(stageSelection))) {
         console.log('Restarting from Stage Selection');
         await ult.selectStage();
-      } else if (await match(css) || (await match(cssSleep))) {
+      } else if ((await match(css)) || (await match(cssSleep))) {
         console.log('Restarting from CSS');
       } else {
         isAlreadyOnWin = await yesnoQuestion(

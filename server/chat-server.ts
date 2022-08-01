@@ -1,4 +1,4 @@
-import { CHARACTERS, getMiiConfiguration } from "./constants";
+import { CHARACTERS, getMiiConfiguration, randomCharacter } from "./constants";
 import { BetModel, IBetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
@@ -441,9 +441,10 @@ const createCommands = ({
       }
     }
 
-    const foundCharacter = CHARACTERS.find(
-      (c) => c.toLowerCase() === character.toLowerCase()
-    );
+    const foundCharacter =
+      character.toLowerCase() === "random"
+        ? randomCharacter()
+        : CHARACTERS.find((c) => c.toLowerCase() === character.toLowerCase());
 
     if (!foundCharacter) {
       client.say(
@@ -648,7 +649,7 @@ export class ChatServer {
       ) {
         client.say(
           channel,
-          "Hello! Use `!start` to register yourself in the game or `!enter CHARACTER` to enter a character for the next match!"
+          `Hello ${userName}! Use \`!start\` to register yourself in the game or \`!enter CHARACTER\` to enter a character for the next match!`
         );
       }
     });

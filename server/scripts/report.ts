@@ -7,6 +7,7 @@ import { mkdir, writeFile } from "fs/promises";
 import * as path from "path";
 import { existsSync } from "fs";
 import { GoogleSpreadsheet } from "google-spreadsheet";
+import Color from "colorjs.io";
 
 const BASE_DATA_DIR = path.join(__dirname, "data");
 
@@ -191,17 +192,30 @@ async function report() {
     await doc.useServiceAccountAuth(sheetConfig);
     await doc.loadInfo();
 
+    const redYellowGreen = new Color("srgb", [1, 0, 0]).range(
+      "rgb(0, 255, 0)",
+      {
+        space: "hsl",
+        outputSpace: "srgb",
+      }
+    );
+
     await Promise.all(
       Object.entries(perRuleset).map(async ([ruleset, perRule]) => {
         const playsSheetName = `"${ruleset}" Plays`;
         const playsSheet = await doc.sheetsByTitle[playsSheetName];
         const winsSheetName = `"${ruleset}" Wins Per Char`;
         const winsSheet = await doc.sheetsByTitle[winsSheetName];
+        const oddsSheetName = `"${ruleset}" Odds`;
+        const oddsSheet = await doc.sheetsByTitle[oddsSheetName];
         if (!playsSheet) {
           throw `Sheet ${playsSheetName} does not exist`;
         }
         if (!winsSheet) {
           throw `Sheet ${winsSheetName} does not exist`;
+        }
+        if (!oddsSheet) {
+          throw `Sheet ${oddsSheetName} does not exist`;
         }
         await playsSheet.loadCells();
         playsSheet.getCell(0, 0).value = "";
@@ -220,9 +234,9 @@ async function report() {
           playsSheet.getCell(rowIndex, 2).value = perRule[x].loses;
           playsSheet.getCell(rowIndex, 3).value = perRule[x].count;
           playsSheet.getCell(rowIndex, 3).value = perRule[x].count;
-          playsSheet.getCell(rowIndex, 4).formula = `=IFERROR($B${rowIndex + 1}/$D${
+          playsSheet.getCell(rowIndex, 4).formula = `=IFERROR($B${
             rowIndex + 1
-          }; 0)`;
+          }/$D${rowIndex + 1}; 0)`;
 
           playsSheet.getCell(rowIndex, 7).formula = `=$E${rowIndex + 1}`;
           playsSheet.getCell(rowIndex, 8).formula = `=$A${rowIndex + 1}`;
@@ -251,6 +265,40 @@ async function report() {
           });
         });
         await winsSheet.saveUpdatedCells();
+
+        await oddsSheet.loadCells();
+        oddsSheet.getCell(0, 0).value = "winner →";
+        CHARACTERS.forEach((x, i) => {
+          const rowIndex = i + 1;
+          oddsSheet.getCell(i + 1, 0).value = x;
+          oddsSheet.getCell(0, i + 1).value = x;
+
+          CHARACTERS.forEach((y, j) => {
+            const colIndex = j + 1;
+            const total =
+              (perRule[y].wonAgainst[x].count || 0) +
+              (perRule[x].wonAgainst[y].count || 0);
+            const odds = perRule[y].wonAgainst[x].count / (total || 1);
+            oddsSheet.getCell(rowIndex, colIndex).value =
+              perRule[y].wonAgainst[x].count / (total || 1);
+            const GRAY = {
+              red: 0.9,
+              green: 0.9,
+              blue: 0.9,
+              alpha: 1,
+            };
+            const interpolatedColor = redYellowGreen(odds);
+            const color = {
+              red: Math.max(interpolatedColor.srgb.r, 0),
+              green: Math.max(interpolatedColor.srgb.g, 0),
+              blue: Math.max(interpolatedColor.srgb.b, 0),
+              alpha: 1,
+            };
+            oddsSheet.getCell(rowIndex, colIndex).backgroundColor =
+              rowIndex === colIndex ? GRAY : color;
+          });
+        });
+        await oddsSheet.saveUpdatedCells();
       })
     );
 

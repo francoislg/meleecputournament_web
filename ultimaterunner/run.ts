@@ -83,8 +83,9 @@ export const runWithServer = async () => {
           console.log("Reseting picks because it might have an exact match");
           return false;
         } else {
-          importantLog(characterName + " doesn't matches, could be any of: " + mightBe.join(","));
-          await toCheck.save(characterReferenceFile(characterName + '_or_' + mightBe.slice(0, 2).join("_or_")));
+          // Don't need this anymore, it seems pretty stable
+          // importantLog(characterName + " doesn't matches, could be any of: " + mightBe.join(","));
+          // await toCheck.save(characterReferenceFile(characterName + '_or_' + mightBe.slice(0, 2).join("_or_")));
         }
       }
     } else {

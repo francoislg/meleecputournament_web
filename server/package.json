@@ -21,6 +21,7 @@
   "homepage": "https://github.com/francoislg/meleecputournament_web#readme",
   "dependencies": {
     "challonge-ts": "0.0.2",
+    "colorjs.io": "^0.3.0",
     "google-spreadsheet": "^3.2.0",
     "mongoose": "^5.12.1",
     "socket.io": "^4.0.0",

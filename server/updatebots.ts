@@ -8,7 +8,9 @@ export const updateBots = async () => {
     console.log(bots, _total);
     if (_total > 0) {
       const data = bots.map(([name, something, id]) => name);
-      await writeFile("./onlinebots.json", JSON.stringify(data, null, 2));
+      if (data.length > 0) {
+        await writeFile("./onlinebots.json", JSON.stringify(data, null, 2));
+      }
       return data;
     }
   } catch (err) {

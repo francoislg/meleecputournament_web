@@ -9,6 +9,7 @@ import {
   MatchMessage,
 } from "./tournament-commands";
 import { tryParseNumber } from "./parsing";
+import { POINTS } from "./constants";
 
 // BE CAREFUL, with `.aggregate`, the entries do not have the `id` property.
 export const twoNextEntries = async () => {
@@ -105,7 +106,7 @@ export const finishSingleMatch = async (
   let awards: Award[] = [];
 
   if (entry?.userId) {
-    const award = await givePointsToUser(entry.userId, 5);
+    const award = await givePointsToUser(entry.userId, POINTS.WIN);
     if (award) {
       awards.push(award);
     }

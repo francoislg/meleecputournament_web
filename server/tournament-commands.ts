@@ -12,6 +12,7 @@ import { createDummyEntries } from "./entries";
 import { Award, givePointsToUser } from "./singlematches-commands";
 import { importantLog } from "./log";
 import { tryParseNumber } from "./parsing";
+import { POINTS } from "./constants";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
@@ -417,7 +418,7 @@ export const givePointsToWinner = async (tournamentId: string) => {
             winnerId: entry.userId,
           }
         );
-        const totalPoints = 50;
+        const totalPoints = POINTS.TOURNAMENT_WIN;
         awards.push(await givePointsToUser(entry.userId, totalPoints));
       } else {
         console.error("TOURNAMENT RESULT: A bot won, too bad.");

@@ -1,3 +1,8 @@
+export const POINTS = {
+  WIN: 20,
+  TOURNAMENT_WIN: 1000,
+}
+
 export const CHARACTERS = [
   "Mario",
   "DonkeyKong",

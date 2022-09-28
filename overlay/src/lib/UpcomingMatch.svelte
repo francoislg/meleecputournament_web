@@ -15,7 +15,9 @@
 	{:else if $matches.upcoming}
 		<div class="match">
 			<h3>
-				<MeleeText text="Open for bets" />
+				<MeleeText
+					text="{$matches.upcoming.match.isCustomMatch ? 'Custom ' : ''} Match open for bets"
+				/>
 			</h3>
 
 			<div>

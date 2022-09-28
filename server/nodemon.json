@@ -3,5 +3,6 @@
     "exitcrash": true,
     "execMap": {
         "ts": "ts-node"
-    }
+    },
+    "ignore": ["onlinebots.json"]
 }

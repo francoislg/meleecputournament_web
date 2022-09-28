@@ -22,6 +22,7 @@ export interface MatchMessage {
   first: PlayerMessageMeta;
   second: PlayerMessageMeta;
   matchId: number;
+  isCustomMatch: boolean;
 }
 
 export interface PlayerMessageMeta {
@@ -168,7 +169,7 @@ export const getNextTournament = async (): Promise<{
 const findCompleteMatchMetaFromMatch = async (
   match: MatchInterfaces.matchResponseObject,
   participants: ParticipantInterfaces.participantResponseObject[]
-) => {
+): Promise<MatchMessage> => {
   const matchId = match.id;
   const findParticipant = async (id) => {
     const participant = participants.find(
@@ -182,6 +183,7 @@ const findCompleteMatchMetaFromMatch = async (
 
   return {
     matchId,
+    isCustomMatch: false,
     first: {
       id: `${match.player1_id}`,
       character: firstParticipant?.character || "???",

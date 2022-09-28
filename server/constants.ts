@@ -1,6 +1,7 @@
 export const POINTS = {
   WIN: 20,
   TOURNAMENT_WIN: 1000,
+  COST_TO_CUSTOM_MATCH: 100,
 }
 
 export const CHARACTERS = [
@@ -268,8 +269,9 @@ const characterDefs: Record<AllCharacters, CharDef> = {
   },
 };
 
-const randomFromList = (list: readonly any[]) =>
-  list[Math.floor(Math.random() * list.length)];
+function randomFromList<T>(list: readonly T[]) {
+  return list[Math.floor(Math.random() * list.length)];
+}
 
 export const randomCharacter = () => randomFromList(CHARACTERS);
 

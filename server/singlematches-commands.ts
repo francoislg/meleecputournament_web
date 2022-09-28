@@ -21,7 +21,7 @@ export const twoNextEntries = async () => {
     },
     {
       $match: {
-        tournamentId: null
+        tournamentId: null,
       },
     },
     {
@@ -97,18 +97,22 @@ export const finishSingleMatch = async (
   matchId: number,
   {
     winnerId,
+    loserId,
     isWinnerFirstPlayer,
-  }: { winnerId: number; isWinnerFirstPlayer: boolean }
+  }: { winnerId: number; loserId: number; isWinnerFirstPlayer: boolean }
 ) => {
   console.log(`Finishing match ${FAKE_TOURNAMENT_ID}/${matchId}: ${winnerId}`);
-  const entry = await EntryModel.findById(winnerId);
+  const winningEntry = await EntryModel.findById(winnerId);
 
   let awards: Award[] = [];
 
-  if (entry?.userId) {
-    const award = await givePointsToUser(entry.userId, POINTS.WIN);
-    if (award) {
-      awards.push(award);
+  if (winningEntry?.userId) {
+    const losingEntry = await EntryModel.findById(loserId);
+    if (losingEntry?.userId !== winningEntry.userId) {
+      const award = await givePointsToUser(winningEntry.userId, POINTS.WIN);
+      if (award) {
+        awards.push(award);
+      }
     }
   }
   const bets = await BetModel.find({
@@ -148,6 +152,9 @@ const findCompleteMatchMetaFromMatch = async (
 
   return {
     matchId: match.matchId,
+    isCustomMatch:
+      firstParticipant.userId &&
+      firstParticipant.userId === secondParticipant.userId,
     first: {
       id: match.player1Id,
       character: firstParticipant?.character || "???",
@@ -170,7 +177,11 @@ export const getNextSingleMatch = async (): Promise<MatchMessage | null> => {
 
   const match = await SingleMatchModel.findOne({
     winner: 0,
-  });
+  })
+    .sort({
+      createdAt: 1,
+    })
+    .exec();
 
   if (!match) {
     return null;
@@ -186,7 +197,11 @@ export const getUpcomingSingleMatch =
     const match = await SingleMatchModel.findOne({
       started: false,
       winner: 0,
-    });
+    })
+      .sort({
+        createdAt: 1,
+      })
+      .exec();
 
     if (match) {
       console.log("Found existing upcoming match");
@@ -219,6 +234,7 @@ export const getUpcomingSingleMatch =
 
     return {
       matchId,
+      isCustomMatch: userId && userId === secondUserId,
       first: {
         id,
         character,
@@ -251,13 +267,61 @@ export const officiallyStartSingleMatch = async (matchId: number) => {
     {
       started: true,
     }
-  );
+  )
+    .sort({
+      createdAt: 1,
+    })
+    .exec();
 };
 export const getNextMatchId = async () => {
   const [{ matchId }] = await SingleMatchModel.find()
     .sort({ matchId: -1 })
     .limit(1);
   return matchId + 1;
+};
+export const createSingleMatchBetween = async (
+  player1: { id; character; name; color },
+  player2: { id; character; name; color },
+  { isCustomMatch }: { isCustomMatch: boolean }
+): Promise<MatchMessage> => {
+  const matchId = await getNextMatchId();
+  const match = new SingleMatchModel();
+  match.matchId = matchId;
+  match.started = false;
+  match.player1Id = player1.id;
+  match.player2Id = player2.id;
+  match.winner = 0;
+  match.ruleset = "chaotic";
+  match.save();
+
+  await EntryModel.updateMany(
+    {
+      _id: {
+        $in: [player1.id, player2.id],
+      },
+    },
+    {
+      tournamentId: FAKE_TOURNAMENT_ID,
+    }
+  );
+
+  return {
+    matchId: match.matchId,
+    isCustomMatch,
+
+    first: {
+      id: match.player1Id,
+      character: player1.character,
+      name: player1.name,
+      color: tryParseNumber(player1.color),
+    },
+    second: {
+      id: match.player2Id,
+      character: player2.character,
+      name: player2.name,
+      color: tryParseNumber(player2.color),
+    },
+  };
 };
 export const createSingleMatch = async (): Promise<MatchMessage> => {
   console.log(`Creating a single match`);
@@ -269,42 +333,25 @@ export const createSingleMatch = async (): Promise<MatchMessage> => {
     playersToAdd.push(...created);
   }
 
-  const matchId = await getNextMatchId();
-  const match = new SingleMatchModel();
-  match.matchId = matchId;
-  match.started = false;
-  match.player1Id = playersToAdd[0].id || playersToAdd[0]._id;
-  match.player2Id = playersToAdd[1].id || playersToAdd[1]._id;
-  match.winner = 0;
-  match.ruleset = "fair";
-  match.save();
+  const [player1, player2] = playersToAdd;
 
-  await EntryModel.updateMany(
+  return createSingleMatchBetween(
     {
-      _id: {
-        $in: playersToAdd.map((p) => p.id || p._id),
-      },
+      id: player1.id || player1._id,
+      character: player1.character,
+      name: player1.name,
+      color: player1.color,
     },
     {
-      tournamentId: FAKE_TOURNAMENT_ID,
+      id: player2.id || player2._id,
+      character: player2.character,
+      name: player2.name,
+      color: player2.color,
+    },
+    {
+      isCustomMatch: false,
     }
   );
-
-  return {
-    matchId: match.matchId,
-    first: {
-      id: match.player1Id,
-      character: playersToAdd[0].character,
-      name: playersToAdd[0].name,
-      color: tryParseNumber(playersToAdd[0].color),
-    },
-    second: {
-      id: match.player2Id,
-      character: playersToAdd[1].character,
-      name: playersToAdd[1].name,
-      color: tryParseNumber(playersToAdd[1].color),
-    },
-  };
 };
 export const givePointsToUser = async (
   twitchId: string,

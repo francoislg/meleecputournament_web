@@ -1,9 +1,15 @@
-import { CHARACTERS, getMiiConfiguration, randomCharacter } from "./constants";
+import {
+  CHARACTERS,
+  getMiiConfiguration,
+  POINTS,
+  randomCharacter,
+} from "./constants";
 import { BetModel, IBetModel } from "./models/Bet";
 import { EntryModel } from "./models/Entry";
 import { UserModel } from "./models/User";
 import { OverlayServer } from "./overlay-server";
 import {
+  createSingleMatchBetween,
   FAKE_TOURNAMENT_ID,
   getNextSingleMatch,
   getUpcomingSingleMatch,
@@ -153,6 +159,57 @@ const getMatchAndBet = async (
   });
 
   return [match, tournament, existingBet];
+};
+
+const parseCharacter = async (
+  { userName }: { userName: string },
+  args: string[]
+) => {
+  const [character, ...nameParts] = args;
+  if (!character) {
+    throw new Error(
+      `${userName} didn't enter a character name. Ex: !enter Mario.`
+    );
+  }
+
+  function isColorNumber(color: string) {
+    try {
+      const c = parseInt(color);
+      return c >= 1 && c <= 8;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  let color = null;
+  if (isColorNumber(nameParts[nameParts.length - 1])) {
+    color = parseInt(nameParts.pop());
+  }
+
+  const name = nameParts.join(" ");
+
+  if (name && name.length > MAX_NAME_LENGTH) {
+    throw new Error(
+      `${userName} entered a custom name a bit too long. The maximum is 20 characters.`
+    );
+  }
+
+  const foundCharacter =
+    character.toLowerCase() === "random"
+      ? randomCharacter()
+      : CHARACTERS.find((c) => c.toLowerCase() === character.toLowerCase());
+
+  if (!foundCharacter) {
+    throw new Error(
+      `The character \"${character}\" from ${userName} was not properly detected. See the list of valid characters in the channel description.`
+    );
+  }
+
+  return {
+    name,
+    color,
+    foundCharacter,
+  };
 };
 
 const createCommands = ({
@@ -406,88 +463,155 @@ const createCommands = ({
       );
     }
   },
-  enter: async ({ userName, userId }, character, ...nameParts) => {
-    if (!character) {
-      client.say(
-        channel,
-        `${userName} didn't enter a character name. Ex: !enter Mario.`
+  enter: async ({ userName, userId }, ...args) => {
+    try {
+      const { name, foundCharacter, color } = await parseCharacter(
+        { userName },
+        args
       );
-      return;
-    }
+      const user = await UserModel.findOne({
+        twitchId: userId,
+      });
 
-    function isColorNumber(color: string) {
-      try {
-        const c = parseInt(color);
-        return c >= 1 && c <= 8;
-      } catch (error) {
-        return false;
-      }
-    }
+      if (!user) {
+        // Please make this match the `start` command, I'm too lazy
+        const newUser = new UserModel();
+        newUser.twitchId = userId;
+        newUser.twitchUsername = userName;
+        newUser.points = POINTS_TO_START_WITH;
+        await newUser.save();
 
-    let color = null;
-    if (isColorNumber(nameParts[nameParts.length - 1])) {
-      color = parseInt(nameParts.pop());
-    }
-
-    const name = nameParts.join(" ");
-
-    if (name) {
-      if (name.length > MAX_NAME_LENGTH) {
         client.say(
           channel,
-          `${userName} entered a custom name a bit too long. The maximum is 20 characters.`
+          `${userName} was given ${POINTS_TO_START_WITH} points to start.`
         );
-        return;
       }
-    }
 
-    const foundCharacter =
-      character.toLowerCase() === "random"
-        ? randomCharacter()
-        : CHARACTERS.find((c) => c.toLowerCase() === character.toLowerCase());
+      const newEntry = new EntryModel();
+      newEntry.userId = userId;
+      newEntry.name = name || `${userName}'s ${foundCharacter}`;
+      newEntry.character = foundCharacter;
+      newEntry.miiConfiguration = getMiiConfiguration(foundCharacter);
+      newEntry.color = color;
 
-    if (!foundCharacter) {
+      await newEntry.save();
+
+      overlay.updateMatchesData();
       client.say(
         channel,
-        `The character \"${character}\" from ${userName} was not properly detected. See the list of valid characters in the channel description.`
+        `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ""}${
+          color ? ` with color #${color}` : ""
+        }.`
       );
-      return;
+    } catch (error) {
+      if ("message" in error) {
+        client.say(channel, (error as Error).message);
+      } else {
+        console.error(error);
+      }
     }
-
+  },
+  match: async ({ userName, userId }, ...args) => {
     const user = await UserModel.findOne({
       twitchId: userId,
     });
 
     if (!user) {
-      // Please make this match the `start` command, I'm too lazy
-      const newUser = new UserModel();
-      newUser.twitchId = userId;
-      newUser.twitchUsername = userName;
-      newUser.points = POINTS_TO_START_WITH;
-      await newUser.save();
-
-      client.say(
-        channel,
-        `${userName} was given ${POINTS_TO_START_WITH} points to start.`
-      );
+      client.say(channel, `${userName} must register first with !start.`);
+      return;
     }
 
-    const newEntry = new EntryModel();
-    newEntry.userId = userId;
-    newEntry.name = name || `${userName}'s ${foundCharacter}`;
-    newEntry.character = foundCharacter;
-    newEntry.miiConfiguration = getMiiConfiguration(foundCharacter);
-    newEntry.color = color;
+    // @TODO Remove this after testing
+    if (
+      userName !== "pw_objection" &&
+      user.points < POINTS.COST_TO_CUSTOM_MATCH
+    ) {
+      client.say(
+        channel,
+        `${userName} only has ${pointsString(
+          user.points
+        )}, but need 1000 points to create a custom match`
+      );
+      return;
+    }
 
-    await newEntry.save();
-
-    overlay.updateMatchesData();
-    client.say(
-      channel,
-      `${userName} entered ${foundCharacter}${name ? ` as "${name}"` : ""}${
-        color ? ` with color #${color}` : ""
-      }.`
+    const allParts = args.join(" ");
+    const matches = allParts.match(/\((.+?)\)/g);
+    if (!matches || matches.length !== 2) {
+      client.say(
+        channel,
+        `${userName} must enter exactly two sets or parenthesis for each character of the match, like so: "!match (<character>) (<character>)". For instance: "!match (Mario RedLuigi 2) (Luigi RealLuigi)".`
+      );
+      return;
+    }
+    // Removes parenthesis
+    const [firstCharacter, secondCharacter] = matches.map((a) =>
+      a.substring(1, a.length - 1)
     );
+    try {
+      const {
+        name: firstName,
+        foundCharacter: firstFoundCharacter,
+        color: firstColor,
+      } = await parseCharacter({ userName }, firstCharacter.split(" "));
+      const {
+        name: secondName,
+        foundCharacter: secondFoundCharacter,
+        color: secondColor,
+      } = await parseCharacter({ userName }, secondCharacter.split(" "));
+
+      const firstEntry = new EntryModel();
+      firstEntry.userId = userId;
+      firstEntry.name = firstName || `${userName}'s ${firstFoundCharacter}`;
+      firstEntry.character = firstFoundCharacter;
+      firstEntry.miiConfiguration = getMiiConfiguration(firstFoundCharacter);
+      firstEntry.color = firstColor;
+
+      const secondEntry = new EntryModel();
+      secondEntry.userId = userId;
+      secondEntry.name = secondName || `${userName}'s ${secondFoundCharacter}`;
+      secondEntry.character = secondFoundCharacter;
+      secondEntry.miiConfiguration = getMiiConfiguration(secondFoundCharacter);
+      secondEntry.color = secondColor;
+
+      const firstSaved = await firstEntry.save();
+      const secondSaved = await secondEntry.save();
+
+      await createSingleMatchBetween(
+        {
+          id: firstSaved.id || firstSaved._id,
+          character: firstSaved.character,
+          name: firstSaved.name,
+          color: firstSaved.color,
+        },
+        {
+          id: secondSaved.id || secondSaved._id,
+          character: secondSaved.character,
+          name: secondSaved.name,
+          color: secondSaved.color,
+        },
+        {
+          isCustomMatch: true,
+        }
+      );
+
+      user.points = Math.max(user.points - POINTS.COST_TO_CUSTOM_MATCH, 0);
+      await user.save();
+
+      overlay.updateMatchesData();
+      client.say(
+        channel,
+        `${userName} entered a custom match between ${
+          firstName ? firstName : firstFoundCharacter
+        } and ${secondName ? secondName : secondFoundCharacter}.`
+      );
+    } catch (error) {
+      if ("message" in error) {
+        client.say(channel, (error as Error).message);
+      } else {
+        console.error(error);
+      }
+    }
   },
 });
 

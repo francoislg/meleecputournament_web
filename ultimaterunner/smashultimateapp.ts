@@ -71,6 +71,7 @@ export class SmashApp {
         await this.ult.selectDefaultRuleset();
       case SmashState.STAGE_SELECTION:
         await this.ult.selectStage();
+        return {};
       case SmashState.TEAM_BATTLE_CSS:
         await this.ult.setTeamBattleBack();
       case SmashState.CSS:

@@ -143,6 +143,7 @@ export class PCServer {
           if (await hasSingleMatchInProgress()) {
             const wins = await finishSingleMatch(matchId, {
               winnerId: winner.id,
+              loserId: loser.id,
               isWinnerFirstPlayer,
             });
             if (wins.length > 0) {

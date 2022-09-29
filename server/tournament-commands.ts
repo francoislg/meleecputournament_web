@@ -12,7 +12,7 @@ import { createDummyEntries } from "./entries";
 import { Award, givePointsToUser } from "./singlematches-commands";
 import { importantLog } from "./log";
 import { tryParseNumber } from "./parsing";
-import { POINTS } from "./constants";
+import { POINTS, SingleMatchRuleset } from "./constants";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
@@ -23,6 +23,7 @@ export interface MatchMessage {
   second: PlayerMessageMeta;
   matchId: number;
   isCustomMatch: boolean;
+  ruleset: SingleMatchRuleset;
 }
 
 export interface PlayerMessageMeta {
@@ -184,6 +185,7 @@ const findCompleteMatchMetaFromMatch = async (
   return {
     matchId,
     isCustomMatch: false,
+    ruleset: 'fair',
     first: {
       id: `${match.player1_id}`,
       character: firstParticipant?.character || "???",

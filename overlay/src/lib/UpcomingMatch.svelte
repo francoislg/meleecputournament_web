@@ -16,7 +16,8 @@
 		<div class="match">
 			<h3>
 				<MeleeText
-					text="{$matches.upcoming.match.isCustomMatch ? 'Custom ' : ''} Match open for bets"
+					text="{$matches.upcoming.match.isCustomMatch ? 'Custom ' : ''} '{$matches.upcoming.match
+						.ruleset}' match open for bets"
 				/>
 			</h3>
 

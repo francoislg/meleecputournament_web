@@ -173,7 +173,7 @@ export class OverlayServer {
       this.openSockets = this.openSockets.filter((s) => s === socket);
     });
 
-    sendInitialData();
+    setTimeout(sendInitialData, 1000);
   }
 
   async updateMatchesData() {

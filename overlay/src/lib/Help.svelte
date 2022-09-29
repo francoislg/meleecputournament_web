@@ -1,5 +1,5 @@
 <div class="footer">
-	Commands are entered with the `!at` prefix.	See the channel description for more information!
+	See the channel description for how to interact with the bot
 </div>
 
 <style>
@@ -8,7 +8,7 @@
 		text-align: center;
 
 		top: 0;
-		right: 50px;
+		right: 120px;
 
 		width: auto;
 	}

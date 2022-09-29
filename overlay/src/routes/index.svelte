@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import Connected from '$lib/Connected.svelte';
+	import Ruleset from '$lib/Ruleset.svelte';
 	import Leaderboard from '$lib/Leaderboard.svelte';
 	import Upcoming from '$lib/UpcomingMatch.svelte';
 	import Entries from '$lib/Entries.svelte';
@@ -17,6 +18,7 @@
 	<Connected />
 	<Tournament />
 	<Help />
+	<Ruleset />
 	<PanelBetweenMatches>
 		<Leaderboard />
 		<Entries />

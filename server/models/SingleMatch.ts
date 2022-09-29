@@ -1,4 +1,5 @@
 import { Document, model, Schema } from "mongoose";
+import { SingleMatchRuleset } from "../constants";
 
 const singleMatch = new Schema(
   {
@@ -17,10 +18,10 @@ const singleMatch = new Schema(
 export interface ISingleMatchModel {
   player1Id: string;
   player2Id: string;
-  matchId: number,
+  matchId: number;
   started: boolean;
   winner: 0 | 1 | 2;
-  ruleset: 'chaotic' | 'fair' | 'other'
+  ruleset: SingleMatchRuleset;
 }
 
 export const SingleMatchModel = model<ISingleMatchModel & Document>(

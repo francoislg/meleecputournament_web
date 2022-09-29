@@ -4,6 +4,10 @@ export const POINTS = {
   COST_TO_CUSTOM_MATCH: 100,
 }
 
+export type SingleMatchRuleset = 'chaotic' | 'fair' | 'other';
+
+export const CURRENT_RULESET: SingleMatchRuleset = 'chaotic';
+
 export const CHARACTERS = [
   "Mario",
   "DonkeyKong",

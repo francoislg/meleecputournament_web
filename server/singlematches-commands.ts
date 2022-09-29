@@ -9,7 +9,7 @@ import {
   MatchMessage,
 } from "./tournament-commands";
 import { tryParseNumber } from "./parsing";
-import { POINTS } from "./constants";
+import { CURRENT_RULESET, POINTS } from "./constants";
 
 // BE CAREFUL, with `.aggregate`, the entries do not have the `id` property.
 export const twoNextEntries = async () => {
@@ -155,6 +155,7 @@ const findCompleteMatchMetaFromMatch = async (
     isCustomMatch:
       firstParticipant.userId &&
       firstParticipant.userId === secondParticipant.userId,
+    ruleset: match.ruleset,
     first: {
       id: match.player1Id,
       character: firstParticipant?.character || "???",
@@ -235,6 +236,7 @@ export const getUpcomingSingleMatch =
     return {
       matchId,
       isCustomMatch: userId && userId === secondUserId,
+      ruleset: CURRENT_RULESET,
       first: {
         id,
         character,
@@ -291,7 +293,7 @@ export const createSingleMatchBetween = async (
   match.player1Id = player1.id;
   match.player2Id = player2.id;
   match.winner = 0;
-  match.ruleset = "chaotic";
+  match.ruleset = CURRENT_RULESET;
   match.save();
 
   await EntryModel.updateMany(
@@ -308,6 +310,7 @@ export const createSingleMatchBetween = async (
   return {
     matchId: match.matchId,
     isCustomMatch,
+    ruleset: match.ruleset,
 
     first: {
       id: match.player1Id,

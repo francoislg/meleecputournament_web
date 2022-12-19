@@ -1,4 +1,4 @@
-import SerialPort from 'serialport';
+import { SerialPort } from 'serialport';
 import { Inputs, LowLevelController } from './controller';
 
 export class SerialController implements LowLevelController {

@@ -1,4 +1,4 @@
-import robot from 'robotjs';
+// import robot from 'robotjs';
 import Jimp from 'jimp';
 
 export interface ScreenSize {
@@ -7,7 +7,7 @@ export interface ScreenSize {
 }
 
 export const getScreenSize = () => {
-  return robot.getScreenSize();
+  return {} // robot.getScreenSize();
 };
 
 export const regionOffset = (
@@ -30,7 +30,7 @@ export interface Region {
 }
 
 export const captureImage = ({ x, y, w, h }: Region) => {
-  const pic = robot.screen.capture(x, y, w, h);
+  const pic: any = {} // robot.screen.capture(x, y, w, h);
   const width = pic.byteWidth / pic.bytesPerPixel; // pic.width is sometimes wrong!
   const height = pic.height;
   const image = new Jimp(width, height);

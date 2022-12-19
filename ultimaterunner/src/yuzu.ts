@@ -3,7 +3,7 @@ import { Image } from './screencapture';
 import { capture } from './states';
 // @ts-ignore
 import { lookup, kill } from 'ps-node';
-import { windowManager } from 'node-window-manager';
+// import { windowManager } from 'node-window-manager';
 import { spawn } from 'child_process';
 import { SmashUltimateControllers } from './smashultimatecontroller';
 import { writeFile } from 'fs/promises';
@@ -69,7 +69,7 @@ export class YuzuCheck {
 
   async setYuzuWindowBounds() {
     if (this.yuzuProcess) {
-      const windows = windowManager.getWindows();
+      const windows = [] // windowManager.getWindows();
 
       const yuzuWindows = windows.filter(
         (w) =>

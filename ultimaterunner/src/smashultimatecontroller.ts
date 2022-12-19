@@ -2,7 +2,9 @@ import { VJoyController } from './vJoyController';
 import { AsyncController, Inputs, LowLevelController } from './controller';
 import { IS_USING_REAL_SWITCH } from './args';
 import { SerialController } from './serialController';
-import SerialPort from 'serialport';
+import { SerialPort } from 'serialport';
+
+const PORT = "COM3"
 
 const EMPTYSPOT = 'EMPTY';
 const RANDOMSPOT = 'RANDOM';
@@ -305,7 +307,7 @@ export class SmashUltimateControllers {
 let serialPort: SerialPort;
 const getPort = async () => {
   if (!serialPort) {
-    serialPort = new SerialPort('\\COM4', { baudRate: 1000000 }, (err) => {
+    serialPort = new SerialPort({ path: `//${PORT}`, baudRate: 1000000 }, (err) => {
       if (err) {
         console.error(err);
       } else {

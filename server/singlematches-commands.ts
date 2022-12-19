@@ -6,10 +6,10 @@ import { createDummyEntries } from "./entries";
 import {
   getBetsForMatch,
   getPossibleEntries,
-  MatchMessage,
 } from "./tournament-commands";
 import { tryParseNumber } from "./parsing";
 import { CURRENT_RULESET, POINTS } from "./constants";
+import { MatchMessage } from "./types";
 
 // BE CAREFUL, with `.aggregate`, the entries do not have the `id` property.
 export const twoNextEntries = async () => {

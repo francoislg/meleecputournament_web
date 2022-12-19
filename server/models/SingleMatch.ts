@@ -1,5 +1,5 @@
 import { Document, model, Schema } from "mongoose";
-import { SingleMatchRuleset } from "../constants";
+import { SingleMatchRuleset } from "../types";
 
 const singleMatch = new Schema(
   {

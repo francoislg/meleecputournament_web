@@ -17,14 +17,14 @@ import {
 import {
   getNextTournament,
   getNextTournamentMatch,
-  getUpcomingTournamentMatch,
-  MatchMessage,
+  getUpcomingTournamentMatch
 } from "./tournament-commands";
 import * as ONLINEBOTS from "./onlinebots.json";
 import * as TOPBOTS from "./top100bots.json";
 import { updateBots } from "./updatebots";
 import { reportLog } from "./log";
 import { Document } from "mongoose";
+import { MatchMessage } from "./types";
 
 const knownBots = [
   "shadowy_stix",
@@ -521,16 +521,12 @@ const createCommands = ({
       return;
     }
 
-    // @TODO Remove this after testing
-    if (
-      userName !== "pw_objection" &&
-      user.points < POINTS.COST_TO_CUSTOM_MATCH
-    ) {
+    if (user.points < POINTS.COST_TO_CUSTOM_MATCH) {
       client.say(
         channel,
-        `${userName} only has ${pointsString(
-          user.points
-        )}, but need 1000 points to create a custom match`
+        `${userName} only has ${pointsString(user.points)}, but need ${
+          POINTS.COST_TO_CUSTOM_MATCH
+        } points to create a custom match`
       );
       return;
     }
@@ -603,7 +599,9 @@ const createCommands = ({
         channel,
         `${userName} entered a custom match between ${
           firstName ? firstName : firstFoundCharacter
-        } and ${secondName ? secondName : secondFoundCharacter}.`
+        } and ${secondName ? secondName : secondFoundCharacter}, and now has ${
+          user.points
+        } points.`
       );
     } catch (error) {
       if ("message" in error) {

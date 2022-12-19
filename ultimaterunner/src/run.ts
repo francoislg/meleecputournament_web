@@ -3,8 +3,8 @@ import { SmashApp } from './smashultimateapp';
 import { YuzuCheck } from './yuzu';
 import { io } from 'socket.io-client';
 
-import type { MatchResponseMessage } from '../server/pc-server';
-import type { MatchMessage } from '../server/tournament-commands';
+import type { MatchResponseMessage } from '../../server/types';
+import type { MatchMessage } from '../../server/types';
 import { IS_USING_REAL_SWITCH } from './args';
 import { capture } from './states';
 import {

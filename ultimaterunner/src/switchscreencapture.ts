@@ -29,7 +29,7 @@ async function retry<T>(toRun: () => Promise<T>) {
 
 export const captureSwitchImage = async (): Promise<Image> => {
   await retry(() =>
-    run(`ffmpeg -rtbufsize 100M -f dshow -i video="${DEVICE}" -frames 1 -q:v 1 ${FILE} -y`)
+    run(`ffmpeg -rtbufsize 100M -f dshow -i video="${DEVICE}" -frames 1 -q:v 1 ${FILE} -y`, { windowsHide: true })
   );
   const img = await Jimp.read(FILE);
   return new Image(img);

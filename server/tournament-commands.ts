@@ -12,27 +12,12 @@ import { createDummyEntries } from "./entries";
 import { Award, givePointsToUser } from "./singlematches-commands";
 import { importantLog } from "./log";
 import { tryParseNumber } from "./parsing";
-import { POINTS, SingleMatchRuleset } from "./constants";
+import { POINTS } from "./constants";
+import { MatchMessage } from "./types";
 
 export const CHALLONGE_API_KEY = process.env.AT_CHALLONGE_KEY;
 export const MINIMUM_NUMBER_OF_PARTICIPANTS = 8;
 export const MAXIMUM_NUMBER_OF_PARTICIPANTS = 16;
-
-export interface MatchMessage {
-  first: PlayerMessageMeta;
-  second: PlayerMessageMeta;
-  matchId: number;
-  isCustomMatch: boolean;
-  ruleset: SingleMatchRuleset;
-}
-
-export interface PlayerMessageMeta {
-  id: string;
-  name: string;
-  character: string;
-  color?: number;
-  temporary?: boolean;
-}
 
 if (!CHALLONGE_API_KEY) {
   throw new Error("Challonge API Key not provided.");

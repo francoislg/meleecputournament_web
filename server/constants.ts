@@ -1,12 +1,12 @@
+import type { SingleMatchRuleset } from "./types"
+
 export const POINTS = {
   WIN: 20,
   TOURNAMENT_WIN: 1000,
   COST_TO_CUSTOM_MATCH: 100,
 }
 
-export type SingleMatchRuleset = 'chaotic' | 'fair' | 'other';
-
-export const CURRENT_RULESET: SingleMatchRuleset = 'chaotic';
+export const CURRENT_RULESET: SingleMatchRuleset = 'fair';
 
 export const CHARACTERS = [
   "Mario",
@@ -92,9 +92,9 @@ export const CHARACTERS = [
   "Pyra",
   "Kazuya",
   "Sora",
-  "MiiBrawler", 
-  "MiiSword", 
-  "MiiGunner"
+  "MiiBrawler", // Fighter
+  "MiiSword", // Sword
+  "MiiGunner" // Gunner
 ] as const;
 
 type AllCharacters = typeof CHARACTERS[number];

@@ -9,9 +9,7 @@ import {
   finishTournament,
   createNewTournament,
   finishMatch,
-  officiallyStartMatch,
-  PlayerMessageMeta,
-  MatchMessage,
+  officiallyStartMatch
 } from "./tournament-commands";
 import {
   hasEnoughEntriesForTournament,
@@ -21,13 +19,7 @@ import {
   officiallyStartSingleMatch,
   finishSingleMatch,
 } from "./singlematches-commands";
-
-export interface MatchResponseMessage {
-  winner: PlayerMessageMeta;
-  loser: PlayerMessageMeta;
-  isWinnerFirstPlayer: boolean;
-  matchId: number;
-}
+import { MatchMessage } from "./types";
 
 let lastMatch: MatchMessage | null = null;
 

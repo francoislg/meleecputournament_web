@@ -1,7 +1,9 @@
 {
     "scripts": {
-        "connect": "cd ultimaterunner && npm run start -- --realswitch --onlyconnect",
-        "start": "cd server && npm run bots && cd .. && concurrently -n overlay,server,runner \"cd overlay && npm run buildpreview\" \"cd server && npm run build && npm run forever:start\" \"cd ultimaterunner && npm run start -- --realswitch\"",
+        "connect": "cd ultimaterunner && npm run controllers",
+        "start": "cd server && npm run bots && cd .. && concurrently -n overlay,server,runner \"cd overlay && npm run buildpreview\" \"cd server && npm run build && npm run forever:start\" \"cd ultimaterunner && npm run build && npm run forever:start -- --realswitch\"",
+        "stop": "concurrently -n server,runner \"cd server && npm run forever:stop\" \"cd ultimaterunner && npm run forever:stop\"",
+        "restart": "npm run stop && npm run start",
         "dev": "cd server && npm run bots && cd ..  && concurrently -n overlay,server,runner \"cd overlay && npm run dev\" \"cd server && npm run dev\" \"cd ultimaterunner && npm run dev -- --realswitch\"",
         "report": "ts-node .\\server\\scripts\\report.ts"
     },

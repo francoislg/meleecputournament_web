@@ -305,7 +305,7 @@ export class SmashUltimateControllers {
 let serialPort: SerialPort;
 const getPort = async () => {
   if (!serialPort) {
-    serialPort = new SerialPort('\\COM3', { baudRate: 1000000 }, (err) => {
+    serialPort = new SerialPort('\\COM4', { baudRate: 1000000 }, (err) => {
       if (err) {
         console.error(err);
       } else {

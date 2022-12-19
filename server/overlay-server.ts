@@ -12,8 +12,8 @@ import {
   getNextTournament,
   getNextTournamentMatch,
   getUpcomingTournamentMatch,
-  MatchMessage,
 } from "./tournament-commands";
+import { MatchMessage } from "./types";
 
 export interface InitialOverlayData {
   leaderboard: ILeaderboard;

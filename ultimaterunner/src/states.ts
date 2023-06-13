@@ -21,6 +21,7 @@ export const capture = async () => {
   }
 };
 
+/** The process to capture the image and return whether it matches the image provided. */
 export const stateMatcher = () => {
   let image: ReturnType<typeof captureImage>;
   let windowPosition: { x: number; y: number };

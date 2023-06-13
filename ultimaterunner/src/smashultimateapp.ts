@@ -23,7 +23,7 @@ enum SmashState {
   RULESET = 'ruleset',
   STAGE_SELECTION = 'stageselection',
   CSS = 'css',
-  TEAM_BATTLE_CSS='team_battle_css',
+  TEAM_BATTLE_CSS = 'team_battle_css',
   MATCH_IN_PROGRESS = 'inprogress',
   MATCH_FINISHED = 'finished',
   MATCH_FINISHED_CHECKING_WINNERS = 'checkingwinners',
@@ -55,6 +55,11 @@ const withMatchEither = (match: ReturnType<typeof stateMatcher>['match']) => {
   return IS_USING_REAL_SWITCH ? match : matcher;
 };
 
+/**
+ * This class is the glue between the controller and the current detected state.
+ * A "tick" takes a snapshot of the current state, it then pressed buttons to get to the required menu, and
+ *  returns the decision to take to the caller.
+ */
 export class SmashApp {
   private stateMatcher = stateMatcher();
   constructor(private ult: SmashUltimateControllers) {}
@@ -203,10 +208,7 @@ export class SmashApp {
   }
 
   private async matchAnyCss(match: ReturnType<typeof stateMatcher>['match']) {
-    return (
-      (await match(css)) ||
-      (await match(cssSleep))
-    );
+    return (await match(css)) || (await match(cssSleep));
   }
 
   private async checkForWinner() {
@@ -224,8 +226,8 @@ export class SmashApp {
   private async checkForMatchOver() {
     const { match: originalMatch } = this.stateMatcher;
     const match = withMatchEither(originalMatch);
-    const isOverStandard = await match(isMatchOver) && !(await match(isMatchInProgress))
-    const isOverSleepFallback = (await match(isMatchOverSleep));
+    const isOverStandard = (await match(isMatchOver)) && !(await match(isMatchInProgress));
+    const isOverSleepFallback = await match(isMatchOverSleep);
     return isOverStandard || isOverSleepFallback;
   }
 }

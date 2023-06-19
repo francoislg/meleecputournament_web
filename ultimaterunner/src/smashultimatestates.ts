@@ -55,10 +55,10 @@ export const cssTeamBattle: AppState = {
   description: 'Whether the css is on the team battle setting (with the Red Flag)',
   referenceFile: REFERENCES_FOLDER + '/css-team-battle.png',
   region: {
-    x: 30,
-    y: 700,
-    w: 25,
-    h: 25,
+    x: 532,
+    y: 45,
+    w: 50,
+    h: 20,
   },
 };
 
@@ -101,6 +101,17 @@ export const isMatchOverSleep: AppState = {
   region: {
     x: 22,
     y: 900,
+    w: 50,
+    h: 50,
+  },
+};
+
+export const isMatchOverRedTeam: AppState = {
+  description: 'Whether the match is over, with the red team',
+  referenceFile: REFERENCES_FOLDER + '/matchover-red.png',
+  region: {
+    x: 50,
+    y: 732,
     w: 50,
     h: 50,
   },

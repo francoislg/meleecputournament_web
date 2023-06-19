@@ -238,6 +238,8 @@ export class SmashUltimateControllers {
     await this.player1CSSCursor.getTo(600, 0);
     await waitFor(500);
     await this.player1.press(Inputs.A).execute();
+    await waitFor(500);
+    await this.player1CSSCursor.calibrate();
   }
 
   async setP1AsCPU() {

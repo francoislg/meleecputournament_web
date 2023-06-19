@@ -14,6 +14,7 @@ import {
   isPlayerTwoACPU,
   cssSleep,
   isMatchOverSleep,
+  isMatchOverRedTeam,
   cssTeamBattle,
 } from './smashultimatestates';
 import { stateMatcher } from './states';
@@ -26,6 +27,8 @@ enum SmashState {
   TEAM_BATTLE_CSS = 'team_battle_css',
   MATCH_IN_PROGRESS = 'inprogress',
   MATCH_FINISHED = 'finished',
+  // A state used as a fallback, we should not really run team battles :(
+  MATCH_FINISHED_TEAM = 'match_finished_team',
   MATCH_FINISHED_CHECKING_WINNERS = 'checkingwinners',
 }
 
@@ -79,6 +82,7 @@ export class SmashApp {
         return {};
       case SmashState.TEAM_BATTLE_CSS:
         await this.ult.setTeamBattleBack();
+        return {  nextDelay: 1000 };
       case SmashState.CSS:
         if (await this.trySetAsCPUACoupleOfTimes()) {
           return {
@@ -106,6 +110,12 @@ export class SmashApp {
         } else {
           return { nextDelay: 500 };
         }
+      case SmashState.MATCH_FINISHED_TEAM:
+        await waitFor(500); // Needed somehow.
+        await this.ult.pressAOnTheWinScreen();
+        await waitFor(1500);
+        await this.ult.finishTheMatch();
+        return { nextDelay: 1000 }
       case SmashState.MATCH_IN_PROGRESS:
         return { nextDelay: 5000, matchInProgress: true };
     }
@@ -202,6 +212,8 @@ export class SmashApp {
       return SmashState.MATCH_FINISHED_CHECKING_WINNERS;
     } else if (await this.checkForMatchOver()) {
       return SmashState.MATCH_FINISHED;
+    }  else if (await match(isMatchOverRedTeam)) {
+       return SmashState.MATCH_FINISHED_TEAM;
     } else {
       return SmashState.MATCH_IN_PROGRESS;
     }

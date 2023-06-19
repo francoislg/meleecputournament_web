@@ -5,7 +5,7 @@
     "sync": "ts-node src/index.ts --setupinputs --realswitch",
     "standalone": "nodemon src/index.ts --standalone --realswitch --exitcrash",
     "unlock": "ts-node src/index.ts --unlock --realswitch",
-    "setup": "ts-node src/index.ts --setup",
+    "setup": "ts-node src/index.ts --setup --realswitch",
     "start": "nodemon src/index.ts --exitcrash",
     "build": "tsc",
     "forever:start": "pm2 start ./bin/index.js --name ultimaterunner --restart-delay 1000 --log ./logs.log --",

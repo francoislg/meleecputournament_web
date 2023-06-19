@@ -15,6 +15,8 @@ import {
   isMatchOver,
   isMatchInProgress,
   cssSleep,
+  isMatchOverRedTeam,
+  cssTeamBattle,
 } from './smashultimatestates';
 import { AppState, stateMatcher } from './states';
 import { captureSwitchImage } from './switchscreencapture';
@@ -54,10 +56,18 @@ export const setup = async () => {
     console.log('Capturing window');
     await windowUpdate();
 
-    // return await captureAndSave(
-    //   regionOffset(windowOffset, isMatchOver.region),
-    //   isMatchOver.referenceFile
-    // );
+    const isSingleCaptureMode = true;
+
+    if (isSingleCaptureMode) {
+      await question(
+        `Press when ready to capture.`
+      )
+      
+      return await captureAndSave(
+        regionOffset(windowOffset, cssTeamBattle.region),
+        cssTeamBattle.referenceFile
+      );
+    }
 
     /*
     do {

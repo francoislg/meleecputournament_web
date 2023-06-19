@@ -4,7 +4,8 @@ import { IS_USING_REAL_SWITCH } from './args';
 import { SerialController } from './serialController';
 import { SerialPort } from 'serialport';
 
-const PORT = "COM3"
+/** Might need to change this if I change USB port. */
+const PORT = 'COM3';
 
 const EMPTYSPOT = 'EMPTY';
 const RANDOMSPOT = 'RANDOM';
@@ -54,6 +55,7 @@ export const randomCharacter = () => {
   return choice;
 };
 
+/** Computations to get the right character is here. */
 class CharacterCursor {
   constructor(private controller: AsyncController, private player: number) {}
 
@@ -153,6 +155,7 @@ class CharacterCursor {
   }
 }
 
+/** The bridge between actions that we want to do in the game and the controller */
 export class SmashUltimateControllers {
   private player1CSSCursor: CharacterCursor;
   private player2CSSCursor: CharacterCursor;

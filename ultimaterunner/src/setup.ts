@@ -23,6 +23,7 @@ import { YuzuCheck } from './yuzu';
 //const FULL_SCREEN_FILE = `${REFERENCES_FOLDER}/fullscreen.png`;
 const WINDOW_FILE = `${REFERENCES_FOLDER}/window.png`;
 
+/** This class is more for debugging, when I want to take reference screenshots */
 export const setup = async () => {
   console.log('Starting the setup, booting the game.');
 

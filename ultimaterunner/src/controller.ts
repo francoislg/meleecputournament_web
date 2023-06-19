@@ -15,6 +15,7 @@ export enum Inputs {
   LEFT,
 }
 
+/** Low-Level controller interface to press buttons. Implemented by Serial or vJoy */
 export interface Controller {
   press(input: Inputs): this;
   hold(input: Inputs): this;
@@ -36,6 +37,10 @@ interface Command {
   execute: () => Promise<any>;
 }
 
+/**
+ * The "async" version allow sending commands, then "execute()" then all sequentially.
+ * Very useful to set up a command queue with multiple controllers and execute both at the same time.
+ */
 export class AsyncController implements Controller {
   private pressTime = 100;
   private timeBetweenCommands = 20;
@@ -119,9 +124,7 @@ const InputsGroupCommand = (
   };
 };
 
-const ConcurrentCommands = (
-  commands: Command[]
-): Command => {
+const ConcurrentCommands = (commands: Command[]): Command => {
   return {
     execute: async () => {
       await Promise.all(commands.map((command) => command.execute()));

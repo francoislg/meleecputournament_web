@@ -15,7 +15,9 @@ import {
   cssSleep,
   isMatchOverSleep,
   isMatchOverRedTeam,
+  isMatchOverBlueTeam,
   cssTeamBattle,
+  cssSoloMenu,
 } from './smashultimatestates';
 import { stateMatcher } from './states';
 
@@ -65,7 +67,7 @@ const withMatchEither = (match: ReturnType<typeof stateMatcher>['match']) => {
  */
 export class SmashApp {
   private stateMatcher = stateMatcher();
-  constructor(private ult: SmashUltimateControllers) {}
+  constructor(private ult: SmashUltimateControllers) { }
 
   async tick(): Promise<ITickResponse> {
     const state = await this.getNextState();
@@ -82,7 +84,7 @@ export class SmashApp {
         return {};
       case SmashState.TEAM_BATTLE_CSS:
         await this.ult.setTeamBattleBack();
-        return {  nextDelay: 1000 };
+        return { nextDelay: 1000 };
       case SmashState.CSS:
         if (await this.trySetAsCPUACoupleOfTimes()) {
           return {
@@ -165,8 +167,7 @@ export class SmashApp {
       tries++;
 
       console.log(
-        `p1: ${isP1Cpu}, p2: ${isP2Cpu}, tries: ${tries}, ${
-          tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)
+        `p1: ${isP1Cpu}, p2: ${isP2Cpu}, tries: ${tries}, ${tries < MAX_TRIES && (!isP1Cpu || !isP2Cpu)
         }`
       );
     }
@@ -212,15 +213,15 @@ export class SmashApp {
       return SmashState.MATCH_FINISHED_CHECKING_WINNERS;
     } else if (await this.checkForMatchOver()) {
       return SmashState.MATCH_FINISHED;
-    }  else if (await match(isMatchOverRedTeam)) {
-       return SmashState.MATCH_FINISHED_TEAM;
+    } else if (await match(isMatchOverRedTeam) || await match(isMatchOverBlueTeam)) {
+      return SmashState.MATCH_FINISHED_TEAM;
     } else {
       return SmashState.MATCH_IN_PROGRESS;
     }
   }
 
   private async matchAnyCss(match: ReturnType<typeof stateMatcher>['match']) {
-    return (await match(css)) || (await match(cssSleep));
+    return (await match(cssSoloMenu) || await match(css)) || (await match(cssSleep));
   }
 
   private async checkForWinner() {

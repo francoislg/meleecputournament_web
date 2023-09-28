@@ -62,6 +62,17 @@ export const cssTeamBattle: AppState = {
   },
 };
 
+export const cssSoloMenu: AppState = {
+  description: 'Whether the css has Solo settings',
+  referenceFile: REFERENCES_FOLDER + '/css-solo.png',
+  region: {
+    x: 532,
+    y: 45,
+    w: 50,
+    h: 20,
+  },
+};
+
 export const isPlayerOneACPU: AppState = {
   description: 'Whether the player 1 is a cpu',
   referenceFile: REFERENCES_FOLDER + '/p1cpu.png',
@@ -109,6 +120,17 @@ export const isMatchOverSleep: AppState = {
 export const isMatchOverRedTeam: AppState = {
   description: 'Whether the match is over, with the red team',
   referenceFile: REFERENCES_FOLDER + '/matchover-red.png',
+  region: {
+    x: 50,
+    y: 732,
+    w: 50,
+    h: 50,
+  },
+};
+
+export const isMatchOverBlueTeam: AppState = {
+  description: 'Whether the match is over, with the blue team',
+  referenceFile: REFERENCES_FOLDER + '/matchover-blue.png',
   region: {
     x: 50,
     y: 732,

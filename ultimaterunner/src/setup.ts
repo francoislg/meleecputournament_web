@@ -17,6 +17,7 @@ import {
   cssSleep,
   isMatchOverRedTeam,
   cssTeamBattle,
+  isMatchOverBlueTeam,
 } from './smashultimatestates';
 import { AppState, stateMatcher } from './states';
 import { captureSwitchImage } from './switchscreencapture';
@@ -59,13 +60,15 @@ export const setup = async () => {
     const isSingleCaptureMode = true;
 
     if (isSingleCaptureMode) {
+      await ult.resetControllersPosition()
+
       await question(
         `Press when ready to capture.`
       )
       
       return await captureAndSave(
-        regionOffset(windowOffset, cssTeamBattle.region),
-        cssTeamBattle.referenceFile
+        regionOffset(windowOffset, isMatchOverBlueTeam.region),
+        isMatchOverBlueTeam.referenceFile
       );
     }
 

@@ -67,8 +67,8 @@ export const setup = async () => {
       )
       
       return await captureAndSave(
-        regionOffset(windowOffset, isMatchOverBlueTeam.region),
-        isMatchOverBlueTeam.referenceFile
+        regionOffset(windowOffset, cssTeamBattle.region),
+        cssTeamBattle.referenceFile
       );
     }
 
